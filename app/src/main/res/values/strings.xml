@@ -1,0 +1,10 @@
+<resources>
+    <string name="app_name">TravelSmart</string>
+    <string name="directionsApiKey">AIzaSyBTMhpbR4rYP5Xeb310j6KU4gV7abI2eaE</string>
+    <string name="title_location_permission">Location Permissions Not Found</string>
+    <string name="text_location_permission">Please turn on location permissions to enable My Location.</string>
+    <string name="ok">OK</string>
+    <string name="gps_network_not_enabled">Location services is not enabled. Please enable to use this app.</string>
+    <string name="open_location_settings">Turn on Location settings</string>
+    <string name="Cancel">Cancel</string>
+</resources>
