@@ -14,7 +14,7 @@
 
         <meta-data
             android:name="com.google.android.geo.API_KEY"
-            android:value="AIzaSyBTMhpbR4rYP5Xeb310j6KU4gV7abI2eaE"/>
+            android:value="@string/directionsApiKey"/>
 
         <activity android:name="com.example.nydia.travelsmartapp.MainActivity"
           >
