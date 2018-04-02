@@ -1,21 +1,16 @@
 <?xml version="1.0" encoding="utf-8"?>
-<RelativeLayout
+<layout
     xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:app="http://schemas.android.com/apk/res-auto"
-    xmlns:tools="http://schemas.android.com/tools"
-    android:layout_width="match_parent"
-    android:layout_height="match_parent"
-    tools:context="com.example.nydia.travelsmartapp.MainActivity"
-    >
+    xmlns:tools="http://schemas.android.com/tools">
 
-    <!--<android.support.v7.widget.Toolbar
-        android:id="@+id/toolbar"
-        android:layout_width="match_parent"
-        android:layout_height="?attr/actionBarSize"
-        android:background="?attr/colorPrimary"
-        app:layout_constraintLeft_toLeftOf="parent"
-        app:layout_constraintRight_toRightOf="parent"
-        app:layout_constraintTop_toTopOf="parent"/>-->
+    <data>
+
+    </data>
+<RelativeLayout
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent">
+
     <android.support.v7.widget.CardView
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
@@ -38,6 +33,28 @@
 
     </android.support.v7.widget.CardView>
 
+    <com.sothree.slidinguppanel.SlidingUpPanelLayout
+        xmlns:sothree="http://schemas.android.com/apk/res-auto"
+        android:id="@+id/sliding_layout"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:gravity="bottom"
+        sothree:umanoPanelHeight="68dp"
+        sothree:umanoShadowHeight="4dp"
+        sothree:umanoFadeColor="@android:color/transparent"
+        sothree:umanoScrollableView="@id/recycler_view"
+        >
+
+    <!--<android.support.v7.widget.Toolbar
+        android:id="@+id/toolbar"
+        android:layout_width="match_parent"
+        android:layout_height="?attr/actionBarSize"
+        android:background="?attr/colorPrimary"
+        app:layout_constraintLeft_toLeftOf="parent"
+        app:layout_constraintRight_toRightOf="parent"
+        app:layout_constraintTop_toTopOf="parent"/>-->
+
+
 
             <!--<TextView
                 android:layout_width="match_parent"
@@ -45,36 +62,8 @@
                 android:gravity="center"
                 android:text="Main Content"
                 android:textSize="16sp" />-->
-    <android.support.design.widget.FloatingActionButton
-        android:id="@+id/myLocationButton"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_alignEnd="@+id/cardView"
-        android:layout_alignParentBottom="true"
-        android:layout_alignRight="@+id/cardView"
-        android:layout_gravity="bottom|end"
-        android:layout_marginBottom="16dp"
-        android:src="@android:drawable/ic_menu_mylocation"
-        app:borderWidth="0dp"
-        app:elevation="6dp"
-        app:fabSize="normal"
-        app:pressedTranslationZ="12dp" />
 
-    <android.support.design.widget.FloatingActionButton
-        android:id="@+id/toggleButton"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_alignStart="@+id/cardView"
-        android:layout_alignParentBottom="true"
-        android:layout_alignLeft="@+id/cardView"
-        android:layout_gravity="bottom|start"
-        android:layout_marginBottom="16dp"
-        android:src="@android:drawable/ic_menu_preferences"
-        app:borderWidth="0dp"
-        app:elevation="6dp"
-        app:fabSize="normal"
-        app:pressedTranslationZ="12dp"
-        android:enabled="false"/>
+
 
 
     <fragment
@@ -84,9 +73,51 @@
         android:name="com.google.android.gms.maps.SupportMapFragment"
         app:layout_constraintLeft_toLeftOf="parent"
         app:layout_constraintRight_toRightOf="parent"
-        app:layout_constraintTop_toTopOf="parent"/>
+        app:layout_constraintTop_toTopOf="parent">
+
+
+
+        <android.support.design.widget.FloatingActionButton
+            android:id="@+id/myLocationButton"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_alignEnd="@+id/cardView"
+            android:layout_alignParentBottom="true"
+            android:layout_alignRight="@+id/cardView"
+            android:layout_gravity="bottom|end"
+            android:layout_marginBottom="16dp"
+            android:src="@android:drawable/ic_menu_mylocation"
+            app:borderWidth="0dp"
+            app:elevation="6dp"
+            app:fabSize="normal"
+            app:pressedTranslationZ="12dp" />
+
+        <!-- TODO: change toggle button image to bus/car (ofc) -->
+        <ToggleButton
+            android:id="@+id/button_favorite"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:background="@drawable/button_favorite"
+            android:layout_alignStart="@+id/cardView"
+            android:layout_alignParentBottom="true"
+            android:layout_alignLeft="@+id/cardView"
+            android:layout_gravity="bottom|start"
+            android:layout_marginBottom="16dp"
+            android:checked="false"
+            android:enabled="false"
+            android:text=""
+            android:textOff=""
+            android:textOn=""/>
+    </fragment>
+
+        <android.support.v7.widget.RecyclerView
+            android:id="@+id/recycler_view"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:scrollbars="vertical" />
 
     <!-- Implementation of find my location button -->
-
+    </com.sothree.slidinguppanel.SlidingUpPanelLayout>
 
 </RelativeLayout>
+</layout>

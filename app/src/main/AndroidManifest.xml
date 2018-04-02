@@ -17,7 +17,7 @@
             android:value="@string/directionsApiKey"/>
 
         <activity android:name="com.example.nydia.travelsmartapp.MainActivity"
-          >
+           >
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
 
