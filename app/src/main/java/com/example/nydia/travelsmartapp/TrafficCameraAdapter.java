@@ -1,11 +1,13 @@
 package com.example.nydia.travelsmartapp;
 
 import android.databinding.BindingAdapter;
-import com.example.nydia.travelsmartapp.databinding.MovieListRowBinding;
+import com.example.nydia.travelsmartapp.databinding.*;
 import android.databinding.DataBindingUtil;
+import android.databinding.ViewDataBinding;
 import android.support.annotation.NonNull;
 import android.support.v7.widget.RecyclerView;
 import android.view.LayoutInflater;
+import android.view.View;
 import android.view.ViewGroup;
 
 import com.example.nydia.travelsmartapp.models.TrafficCamera;
@@ -19,9 +21,10 @@ import java.util.List;
 
 public class TrafficCameraAdapter extends RecyclerView.Adapter<TrafficCameraAdapter.ViewHolder>{
     private List<TrafficCamera> trafficCameras = new ArrayList<>();
+    private ViewDataBinding binding;
 
     public TrafficCameraAdapter(@NonNull List<TrafficCamera> trafficCameras) {
-        this.trafficCameras.addAll(trafficCameras);
+        this.trafficCameras = trafficCameras;
     }
 
     @Override
@@ -42,6 +45,11 @@ public class TrafficCameraAdapter extends RecyclerView.Adapter<TrafficCameraAdap
         return trafficCameras.size();
     }
 
+    public void updateList(List<TrafficCamera> trafficCameras) {
+        this.trafficCameras = trafficCameras;
+        notifyDataSetChanged();
+    }
+
     public class ViewHolder extends RecyclerView.ViewHolder {
         private MovieListRowBinding mBinding;
         public ViewHolder(MovieListRowBinding binding) {
@@ -49,8 +57,8 @@ public class TrafficCameraAdapter extends RecyclerView.Adapter<TrafficCameraAdap
             mBinding = binding;
         }
 
-        public void bind(@NonNull TrafficCamera user) {
-            mBinding.setTraffic_camera(user);
+        public void bind(@NonNull TrafficCamera cameras) {
+            mBinding.setVariable(BR.traffic_camera, cameras);
             mBinding.executePendingBindings();
         }
     }

@@ -3,6 +3,8 @@ package com.example.nydia.travelsmartapp;
 import android.Manifest;
 import android.annotation.SuppressLint;
 import android.app.AlertDialog;
+import android.arch.lifecycle.LifecycleOwner;
+import android.arch.lifecycle.LiveData;
 import android.arch.lifecycle.Observer;
 import android.arch.lifecycle.ViewModelProviders;
 import android.content.Context;
@@ -19,12 +21,15 @@ import android.support.annotation.Nullable;
 import android.support.design.widget.BottomSheetBehavior;
 import android.support.design.widget.BottomSheetDialogFragment;
 import android.support.design.widget.FloatingActionButton;
+import android.support.design.widget.TabLayout;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.content.ContextCompat;
+import android.support.v4.view.ViewPager;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.support.v7.widget.DefaultItemAnimator;
 import android.support.v7.widget.DividerItemDecoration;
+import android.support.v7.widget.GridLayoutManager;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.util.Log;
@@ -40,6 +45,8 @@ import android.widget.Toast;
 import android.widget.ToggleButton;
 
 import com.example.nydia.travelsmartapp.databinding.ActivityMainBinding;
+import com.example.nydia.travelsmartapp.models.Carpark;
+import com.example.nydia.travelsmartapp.models.CarparkAvailabilityResponse;
 import com.example.nydia.travelsmartapp.models.CurrentLocationListener;
 import com.example.nydia.travelsmartapp.models.DirectionsResults;
 import com.example.nydia.travelsmartapp.models.Route;
@@ -86,7 +93,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 
-public class MainActivity extends AppCompatActivity implements OnMapReadyCallback, GoogleMap.OnMapLoadedCallback {
+public class MainActivity extends AppCompatActivity implements LifecycleOwner, OnMapReadyCallback, GoogleMap.OnMapLoadedCallback {
 
     private static final String TAG = MainActivity.class.getSimpleName();
     private static final float DEFAULT_ZOOM = 16;
@@ -127,16 +134,13 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
     private RecyclerView recyclerView;
     private Polyline polyline;
     private TrafficCameraViewModel viewModel;
-    private List<TrafficCamera> trafficCamera;
+    private List<TrafficCamera> trafficCamera = new ArrayList<>();
+    private JourneyInfo journeyInfo;
 
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        if (savedInstanceState != null) {
-            mLastKnownLocation = savedInstanceState.getParcelable(KEY_LOCATION);
-            mCameraPosition = savedInstanceState.getParcelable(KEY_CAMERA_POSITION);
-        }
         getSupportActionBar().hide();
         /*requestWindowFeature(Window.FEATURE_NO_TITLE);
         getWindow().setFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN,
@@ -144,7 +148,6 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
 
         //setContentView(R.layout.activity_main);
         ActivityMainBinding binding = DataBindingUtil.setContentView(this, R.layout.activity_main);
-
 
         slidingLayout = (SlidingUpPanelLayout) findViewById(R.id.sliding_layout);
         slidingLayout.setAnchorPoint(0.4f);
@@ -173,6 +176,7 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
                 destination = place.getLatLng().latitude + "," + place.getLatLng().longitude;
 
                 Log.i(TAG, "Place: " + place.getAddress().toString());
+                getDirectionsResults(origin,destination);
                 //plotDirections(origin, destination, defaultTravelMode);
 
 
@@ -194,16 +198,20 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
         mBottomSheetBehavior.setPeekHeight(300);
         mBottomSheetBehavior.setState(BottomSheetBehavior.STATE_COLLAPSED);*/
 
-        /*recyclerView = (RecyclerView) findViewById(R.id.recycler_view);
+        ViewPager viewPager = (ViewPager) findViewById(R.id.viewpager);
+        addTabs(viewPager);
 
-        mAdapter = new TrafficCameraAdapter(trafficCamera);
-        RecyclerView.LayoutManager mLayoutManager = new LinearLayoutManager(getApplicationContext());
+        TabLayout tabLayout = (TabLayout) findViewById(R.id.tabs);
+        tabLayout.setupWithViewPager(viewPager);
+
+        /*recyclerView = (RecyclerView) findViewById(R.id.recycler_view);
+        TrafficCameraAdapter mAdapter = new TrafficCameraAdapter(trafficCamera);
+        RecyclerView.LayoutManager mLayoutManager = new GridLayoutManager(getApplicationContext(), 3);
         recyclerView.setLayoutManager(mLayoutManager);
-        recyclerView.setItemAnimator(new DefaultItemAnimator());
+        //recyclerView.setItemAnimator(new DefaultItemAnimator());
         recyclerView.setAdapter(mAdapter);
-        recyclerView.addItemDecoration(new DividerItemDecoration(this, LinearLayoutManager.VERTICAL));
+        //recyclerView.addItemDecoration(new DividerItemDecoration(getApplicationContext(), LinearLayoutManager.VERTICAL));
 */
-        //prepareMovieData();*/
         onSlideListener();
 
         viewModel =
@@ -220,6 +228,23 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
         }
     }
 
+    @Override
+    public void onRestoreInstanceState(Bundle savedInstanceState) {
+        if (savedInstanceState != null) {
+            super.onRestoreInstanceState(savedInstanceState);
+            mLastKnownLocation = savedInstanceState.getParcelable(KEY_LOCATION);
+            mCameraPosition = savedInstanceState.getParcelable(KEY_CAMERA_POSITION);
+        }
+    }
+
+    private void addTabs(ViewPager viewPager) {
+        ViewPagerAdapter adapter = new ViewPagerAdapter(getSupportFragmentManager());
+        journeyInfo = new JourneyInfo().newInstance(trafficCamera);
+        adapter.addFrag(journeyInfo, "Journey Info");
+
+        viewPager.setAdapter(adapter);
+    }
+
     private SlidingUpPanelLayout.PanelSlideListener onSlideListener() {
         return new SlidingUpPanelLayout.PanelSlideListener() {
             @Override
@@ -230,8 +255,8 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
 
             @Override
             public void onPanelStateChanged(View panel, SlidingUpPanelLayout.PanelState previousState, SlidingUpPanelLayout.PanelState newState) {
-                Log.d(TAG, "onPanelStateChanged: " + newState);
-                Log.d(TAG, "autocompleteFragment: " + autocompleteFragment.isVisible());
+                //Log.d(TAG, "onPanelStateChanged: " + newState);
+                //Log.d(TAG, "autocompleteFragment: " + autocompleteFragment.isVisible());
 
                 //TODO: better animation?
                 if (newState == SlidingUpPanelLayout.PanelState.EXPANDED)
@@ -296,13 +321,15 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
     public void onMapLoaded() {
         //observeViewModel(viewModel);
         setupGoogleMapScreenSettings();
+        intializeMapCamera();
         //getDeviceLocation();
     }
 
 
-    private void plotDirections(DirectionsResults directions, boolean driving) {
+    private void plotDirections(DirectionsResults directions) {
         if (directions != null) {
             addPolyline(directions, mMap);
+
             //TextView testview = (TextView)findViewById(R.id.testview);
             //testview.setText(directions.routes[overview].legs[overview].steps[overview].htmlInstructions);
             /*movieList.clear();
@@ -319,6 +346,24 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
         }
     }
 
+    private void intializeMapCamera(){
+        if (mMap == null) {
+            return;
+        }
+        //initiate map camera
+        if (mLastKnownLocation != null) {
+            Log.d(TAG, "Camera zooming to Last Known Location");
+            mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(new LatLng(mLastKnownLocation.getLatitude(), mLastKnownLocation.getLongitude()), DEFAULT_ZOOM));
+        } else if (mCameraPosition != null) {
+            Log.d(TAG, "Camera zooming to saved camera position");
+            mMap.moveCamera(CameraUpdateFactory.newCameraPosition(mCameraPosition));
+        } else {
+            Log.d(TAG, "Camera zooming to saved default location");
+            mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(mDefaultLocation, DEFAULT_ZOOM));
+
+        }
+    }
+
     private void setupGoogleMapScreenSettings() {
         if (mMap == null) {
             return;
@@ -329,7 +374,7 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
             if (mLocationPermissionGranted) {
                 getDeviceLocation();
                 mMap.setMyLocationEnabled(true);
-                Log.d(TAG, "Current location:" + mLastKnownLocation);
+                //Log.d(TAG, "Current location:" + mLastKnownLocation);
                 //mMap.getUiSettings().setMyLocationButtonEnabled(true);
             }
         } catch (SecurityException e) {
@@ -341,27 +386,22 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
         //mMap.setTrafficEnabled(true);
         UiSettings mUiSettings = mMap.getUiSettings();
         //mUiSettings.setZoomControlsEnabled(true);
-        mUiSettings.setCompassEnabled(true);
+        //mUiSettings.setCompassEnabled(true);
         mUiSettings.setMapToolbarEnabled(false);
-        mUiSettings.setMyLocationButtonEnabled(false);
+        //mUiSettings.setMyLocationButtonEnabled(false);
         mUiSettings.setScrollGesturesEnabled(true);
         mUiSettings.setZoomGesturesEnabled(true);
         mUiSettings.setTiltGesturesEnabled(true);
         mUiSettings.setRotateGesturesEnabled(true);
-        getIncidents(viewModel);
+    }
 
-        //initiate map camera
-        if (mLastKnownLocation != null) {
-            Log.d(TAG, "Camera zooming to Last Known Location");
-            mMap.animateCamera(CameraUpdateFactory.newLatLngZoom(new LatLng(mLastKnownLocation.getLatitude(), mLastKnownLocation.getLongitude()), DEFAULT_ZOOM));
-        } else if (mCameraPosition != null) {
-            Log.d(TAG, "Camera zooming to saved camera position");
-            mMap.animateCamera(CameraUpdateFactory.newCameraPosition(mCameraPosition));
-        } else {
-            Log.d(TAG, "Camera zooming to saved default location");
-            mMap.animateCamera(CameraUpdateFactory.newLatLngZoom(mDefaultLocation, DEFAULT_ZOOM));
-
-        }
+    private void getDirectionsResults(String origin, String destination){
+        viewModel.getDirectionsResultsObservable(origin, destination).observe(this, new Observer<DirectionsResults>() {
+            @Override
+            public void onChanged(@Nullable DirectionsResults directionsResults) {
+                plotDirections(directionsResults);
+            }
+        });
     }
 
     /*private void addMarkersToMap(GoogleMapsAPI transitMode, GoogleMap mMap) {
@@ -411,7 +451,7 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
         routelist.addAll(decodelist);
         routelist.add(new LatLng(route.getLegs().get(0).getEndLocation().getLat(), route.getLegs().get(0).getEndLocation().getLng()));
 
-        PolylineOptions decodedPath = new PolylineOptions().width(10).color(
+        PolylineOptions decodedPath = new PolylineOptions().width(15).color(
                 Color.RED);
         for (int i = 0; i < routelist.size(); i++) {
             decodedPath.add(routelist.get(i));
@@ -426,9 +466,75 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
         if(result)
             mMap.addMarker(new MarkerOptions().position(point));*/
         //getNearestCameras(viewModel, routelist);
-        //getNearestIncidents(viewModel, routelist);
-        getIncidents(viewModel);
+        getNearestIncidents(viewModel, routelist);
+        getNearestCameras(viewModel, routelist);
+        //getCarparkAvailability(viewModel);
+        getNearestAvailableCarpark(viewModel, new LatLng(route.getLegs().get(0).getEndLocation().getLat(), route.getLegs().get(0).getEndLocation().getLng()));
+    }
 
+    private void getNearestIncidents(TrafficCameraViewModel viewModel, ArrayList<LatLng> routelist) {
+        viewModel.getNearestIncidentsObservable(routelist).observe(this, new Observer<List<TrafficIncident>>() {
+
+            @Override
+            public void onChanged(@Nullable List<TrafficIncident> incidents) {
+                if (incidents.size() > 0) {
+                    Log.d(TAG, "Nearest incident");
+                    for (TrafficIncident incident: incidents) {
+                        mMap.addMarker(new MarkerOptions().position(new LatLng(incident.getLatitude(), incident.getLongitude())).title(incident.getMessage()));
+                    }
+                    //showTrafficIncidents(incidents);
+                }
+            }
+        });
+    }
+
+    private void getNearestCameras(TrafficCameraViewModel viewModel, ArrayList<LatLng> routelist) {
+        viewModel.getNearestCamerasObservable(routelist).observe(this, new Observer<List<TrafficCamera>>() {
+
+            @Override
+            public void onChanged(@Nullable List<TrafficCamera> cameras) {
+                if (cameras.size() > 0) {
+                    Log.d(TAG, "Nearest cameras");
+                    //recyclerView.setVisibility(View.VISIBLE);
+                }
+                Log.d(TAG, "Updating recyclerview");
+                trafficCamera.clear();
+                trafficCamera.addAll(cameras);
+                journeyInfo.setTrafficCameras((ArrayList)trafficCamera);
+                //recyclerView.getAdapter().notifyDataSetChanged();
+            }
+        });
+    }
+
+    private void getNearestAvailableCarpark(final TrafficCameraViewModel viewModel, LatLng destination) {
+        viewModel.getNearestAvailableCarparkObservable(destination).observe(this, new Observer<List<Carpark>>() {
+
+            @Override
+            public void onChanged(@Nullable List<Carpark> carparks) {
+                if (carparks.size() > 0) {
+                    for (Carpark carpark : carparks) {
+                        getAddress(viewModel, carpark.getGeometries().get(0).getCoordinates());
+                        //String address = getAddress(viewModel, carpark.getGeometries().get(0).getCoordinates());
+                        //mMap.addMarker(new MarkerOptions().position(latlng).title(address));
+                    }
+                }
+                //showTrafficIncidents(incidents);
+            }
+        });
+    }
+
+    private void getAddress(TrafficCameraViewModel viewModel, final String coordinates) {
+        viewModel.getAddress(coordinates).observe(this, new Observer<String>() {
+            @Override
+            public void onChanged(@Nullable String reverseGeocoding) {
+                if (reverseGeocoding != null) {
+                    String[] latlong = coordinates.split(",");
+                    LatLng latlng = new LatLng(Double.parseDouble(latlong[0]), Double.parseDouble(latlong[1]));
+                    mMap.addMarker(new MarkerOptions().position(latlng).title(reverseGeocoding));
+
+                }}
+                //showTrafficIncidents(incidents);
+        });
     }
 
     private String getEndLocationTitle(DirectionsResult results) {
@@ -450,6 +556,31 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
                 }
             }
         });
+    }
+
+    private void getCarparkAvailability(TrafficCameraViewModel viewModel) {
+        viewModel.getCarparkAvailabilityObservable().observe(this, new Observer<CarparkAvailabilityResponse>() {
+
+            @Override
+            public void onChanged(@Nullable CarparkAvailabilityResponse carparkAvailability) {
+                if (carparkAvailability != null) {
+                    showCarparkAvailability(carparkAvailability);
+                    }
+                    //showTrafficIncidents(incidents);
+            }
+        });
+    }
+
+    private void showCarparkAvailability(CarparkAvailabilityResponse carparkAvailability) {
+        for (int i = 0; i < carparkAvailability.getResult().size(); i++) {
+            if (carparkAvailability.getResult().get(i).getGeometries() != null) {
+                Carpark.Geometry carpark = carparkAvailability.getResult().get(i).getGeometries().get(0);
+                Double lat = carpark.getLatitude();
+                Double lng = carpark.getLongitude();
+                //Log.d(TAG, "Carpark available: " + lat + "," + lng);
+                mMap.addMarker(new MarkerOptions().position(new LatLng(lat, lng)));
+            }
+        }
     }
 
     private void showTrafficIncidents(TrafficIncidentResponse incidents) {
@@ -523,6 +654,7 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
                     getDeviceLocation();
                     mMap.setMyLocationEnabled(true);
                     userLocationFAB();
+                    intializeMapCamera();
                 }
             }
         }
@@ -534,7 +666,6 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
             @Override
             public void onClick(View v) {
                 if (mLocationPermissionGranted == true && mGpsOn == true) {
-                    getDeviceLocation();
                     mMap.animateCamera(CameraUpdateFactory.newLatLng(new LatLng(mLastKnownLocation.getLatitude(), mLastKnownLocation.getLongitude())));
                 } else {
                     mGpsOn = checkLocationSettings();

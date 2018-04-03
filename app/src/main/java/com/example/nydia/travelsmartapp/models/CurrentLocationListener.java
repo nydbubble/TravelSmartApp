@@ -41,8 +41,8 @@ public class CurrentLocationListener extends LiveData<Location> {
     private synchronized void createLocationRequest() {
         Log.d(TAG, "Creating location request");
         mLocationRequest = LocationRequest.create();
-        mLocationRequest.setInterval(10000);
-        mLocationRequest.setFastestInterval(5000);
+        mLocationRequest.setInterval(100000);
+        mLocationRequest.setFastestInterval(50000);
         mLocationRequest.setPriority(LocationRequest.PRIORITY_HIGH_ACCURACY);
     }
 

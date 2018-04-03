@@ -4,6 +4,7 @@ import android.arch.lifecycle.LiveData;
 import android.arch.lifecycle.MutableLiveData;
 
 import com.example.nydia.travelsmartapp.models.DirectionsResults;
+import com.example.nydia.travelsmartapp.models.GeocodingResults;
 
 import okhttp3.OkHttpClient;
 import retrofit2.Call;
@@ -62,6 +63,26 @@ public class DirectionsRepository {
 
             @Override
             public void onFailure(Call<DirectionsResults> call, Throwable t) {
+
+                // Error handling will be explained in the next article …
+            }
+
+        });
+
+        return data;
+    }
+
+    public LiveData<String> getAddress(String latlng) {
+        final MutableLiveData<String> data = new MutableLiveData<>();
+
+        directionsService.getReverseGeocoding(latlng, apiKey).enqueue(new Callback<GeocodingResults>() {
+            @Override
+            public void onResponse(Call<GeocodingResults> call, Response<GeocodingResults> response) {
+                data.setValue(response.body().getResults().get(0).getFormattedAddress());
+            }
+
+            @Override
+            public void onFailure(Call<GeocodingResults> call, Throwable t) {
 
                 // Error handling will be explained in the next article …
             }

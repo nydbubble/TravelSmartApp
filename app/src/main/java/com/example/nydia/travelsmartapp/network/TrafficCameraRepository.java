@@ -38,7 +38,6 @@ public class TrafficCameraRepository  extends LiveData {
     private static final String base_url = "http://datamall2.mytransport.sg/";
 
     private TrafficCameraRepository(){
-        //TODO this gitHubService instance will be injected using Dagger in part #2 ...
         if(retrofit==null) {
             OkHttpClient.Builder builder = new OkHttpClient.Builder();
             builder.addInterceptor(new Interceptor() {

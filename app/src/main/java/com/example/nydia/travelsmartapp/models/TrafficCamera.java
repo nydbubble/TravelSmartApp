@@ -1,15 +1,22 @@
 package com.example.nydia.travelsmartapp.models;
 
 
+import android.databinding.BindingAdapter;
+import android.os.Parcel;
+import android.os.Parcelable;
+import android.widget.ImageView;
+
+import com.example.nydia.travelsmartapp.R;
 import com.google.gson.annotations.Expose;
 import com.google.gson.annotations.SerializedName;
+import com.squareup.picasso.Picasso;
 
 /**
  * Created by nydia on 3/27/18.
  */
 
 
-public class TrafficCamera {
+public class TrafficCamera implements Parcelable {
 
     @SerializedName("CameraID")
     @Expose
@@ -63,4 +70,13 @@ public class TrafficCamera {
         this.imageLink = imageLink;
     }
 
+    @Override
+    public int describeContents() {
+        return 0;
+    }
+
+    @Override
+    public void writeToParcel(Parcel parcel, int i) {
+
+    }
 }

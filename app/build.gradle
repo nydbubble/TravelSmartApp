@@ -1,7 +1,7 @@
 apply plugin: 'com.android.application'
 
 android {
-    dataBinding{
+    dataBinding {
         enabled = true
     }
     compileSdkVersion 26
@@ -31,7 +31,7 @@ dependencies {
     androidTestImplementation 'com.android.support.test:runner:1.0.1'
     androidTestImplementation 'com.android.support.test.espresso:espresso-core:3.0.1'
     compile 'com.android.support:design:26.1.0'
-        implementation 'com.android.support:cardview-v7:26.1.0'
+    implementation 'com.android.support:cardview-v7:26.1.0'
 
     //Google Maps
     implementation 'com.google.android.gms:play-services-maps:12.0.0'
@@ -52,5 +52,11 @@ dependencies {
 
     //Sliding up panel
     compile 'com.sothree.slidinguppanel:library:3.4.0@aar'
+
+    //Picasso
+    implementation 'com.squareup.picasso:picasso:2.71828'
+
+    //Glide
+    compile 'com.github.bumptech.glide:glide:3+'
 
 }
