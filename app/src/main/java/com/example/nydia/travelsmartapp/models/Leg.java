@@ -1,11 +1,16 @@
 
 package com.example.nydia.travelsmartapp.models;
 
+import android.annotation.SuppressLint;
+import android.os.Parcel;
+import android.os.Parcelable;
+
 import java.util.List;
 import com.google.gson.annotations.Expose;
 import com.google.gson.annotations.SerializedName;
 
-public class Leg {
+@SuppressLint("ParcelCreator")
+public class Leg implements Parcelable{
 
     @SerializedName("distance")
     @Expose
@@ -107,8 +112,18 @@ public class Leg {
         this.viaWaypoint = viaWaypoint;
     }
 
+    @Override
+    public int describeContents() {
+        return 0;
+    }
 
-    public class Distance {
+    @Override
+    public void writeToParcel(Parcel parcel, int i) {
+
+    }
+
+
+    public static class Distance {
 
         @SerializedName("text")
         @Expose

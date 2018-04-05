@@ -6,12 +6,9 @@
         <variable
             name="leg"
             type="com.example.nydia.travelsmartapp.models.Leg" />
-        <variable
-            name="forecast"
-            type="com.example.nydia.travelsmartapp.models.Forecast"/>
     </data>
     <ScrollView
-        android:id="@+id/destinationinfo"
+        android:id="@+id/journeyinfo"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:isScrollContainer="false">
@@ -25,7 +22,7 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_margin="10dp"
-                android:id="@+id/weather_card">
+                android:id="@+id/distance_card">
                 <RelativeLayout
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
@@ -45,14 +42,14 @@
                         android:textColor="@color/title"
                         android:textSize="16sp"
                         android:textStyle="bold"
-                        android:text="@{forecast.area}"/>
+                        android:text="@{leg.distance.text}"/>
                     <TextView
                         android:id="@+id/duration"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
                         android:layout_below="@+id/distance"
                         android:textColor="@color/title"
-                        android:text="@{forecast.forecast}"/>
+                        android:text="@{leg.duration.text}"/>
                 </RelativeLayout>
             </android.support.v7.widget.CardView>
             <android.support.v7.widget.CardView

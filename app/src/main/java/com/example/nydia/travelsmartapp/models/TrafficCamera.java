@@ -38,6 +38,33 @@ public class TrafficCamera implements Parcelable {
         this.imageLink = imageLink;
     }
 
+    protected TrafficCamera(Parcel in) {
+        cameraID = in.readString();
+        if (in.readByte() == 0) {
+            latitude = null;
+        } else {
+            latitude = in.readDouble();
+        }
+        if (in.readByte() == 0) {
+            longitude = null;
+        } else {
+            longitude = in.readDouble();
+        }
+        imageLink = in.readString();
+    }
+
+    public static final Creator<TrafficCamera> CREATOR = new Creator<TrafficCamera>() {
+        @Override
+        public TrafficCamera createFromParcel(Parcel in) {
+            return new TrafficCamera(in);
+        }
+
+        @Override
+        public TrafficCamera[] newArray(int size) {
+            return new TrafficCamera[size];
+        }
+    };
+
     public String getCameraID() {
         return cameraID;
     }
@@ -77,6 +104,19 @@ public class TrafficCamera implements Parcelable {
 
     @Override
     public void writeToParcel(Parcel parcel, int i) {
-
+        parcel.writeString(cameraID);
+        if (latitude == null) {
+            parcel.writeByte((byte) 0);
+        } else {
+            parcel.writeByte((byte) 1);
+            parcel.writeDouble(latitude);
+        }
+        if (longitude == null) {
+            parcel.writeByte((byte) 0);
+        } else {
+            parcel.writeByte((byte) 1);
+            parcel.writeDouble(longitude);
+        }
+        parcel.writeString(imageLink);
     }
 }

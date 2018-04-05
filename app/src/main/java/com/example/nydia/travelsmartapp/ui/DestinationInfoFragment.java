@@ -1,23 +1,23 @@
-package com.example.nydia.travelsmartapp;
+package com.example.nydia.travelsmartapp.ui;
 
-import android.content.Context;
-import android.net.Uri;
 import android.os.Bundle;
 import android.support.v4.app.Fragment;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 
+import com.example.nydia.travelsmartapp.R;
+
 
 /**
  * A simple {@link Fragment} subclass.
  * Activities that contain this fragment must implement the
- * {@link DestinationInfo.OnFragmentInteractionListener} interface
+ * {@link DestinationInfoFragment.OnFragmentInteractionListener} interface
  * to handle interaction events.
- * Use the {@link DestinationInfo#newInstance} factory method to
+ * Use the {@link DestinationInfoFragment#newInstance} factory method to
  * create an instance of this fragment.
  */
-public class DestinationInfo extends Fragment {
+public class DestinationInfoFragment extends Fragment {
     // TODO: Rename parameter arguments, choose names that match
     // the fragment initialization parameters, e.g. ARG_ITEM_NUMBER
     private static final String ARG_PARAM1 = "param1";
@@ -29,7 +29,7 @@ public class DestinationInfo extends Fragment {
 
     //private OnFragmentInteractionListener mListener;
 
-    public DestinationInfo() {
+    public DestinationInfoFragment() {
         // Required empty public constructor
     }
 
@@ -39,11 +39,11 @@ public class DestinationInfo extends Fragment {
      *
      * @param param1 Parameter 1.
      * @param param2 Parameter 2.
-     * @return A new instance of fragment DestinationInfo.
+     * @return A new instance of fragment DestinationInfoFragment.
      */
     // TODO: Rename and change types and number of parameters
-    public static DestinationInfo newInstance(String param1, String param2) {
-        DestinationInfo fragment = new DestinationInfo();
+    public static DestinationInfoFragment newInstance(String param1, String param2) {
+        DestinationInfoFragment fragment = new DestinationInfoFragment();
         Bundle args = new Bundle();
         args.putString(ARG_PARAM1, param1);
         args.putString(ARG_PARAM2, param2);

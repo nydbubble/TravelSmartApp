@@ -1,13 +1,13 @@
-package com.example.nydia.travelsmartapp;
+package com.example.nydia.travelsmartapp.ui;
 
-import android.databinding.BindingAdapter;
+import com.example.nydia.travelsmartapp.BR;
+import com.example.nydia.travelsmartapp.R;
 import com.example.nydia.travelsmartapp.databinding.*;
 import android.databinding.DataBindingUtil;
 import android.databinding.ViewDataBinding;
 import android.support.annotation.NonNull;
 import android.support.v7.widget.RecyclerView;
 import android.view.LayoutInflater;
-import android.view.View;
 import android.view.ViewGroup;
 
 import com.example.nydia.travelsmartapp.models.TrafficCamera;
@@ -21,7 +21,6 @@ import java.util.List;
 
 public class TrafficCameraAdapter extends RecyclerView.Adapter<TrafficCameraAdapter.ViewHolder>{
     private List<TrafficCamera> trafficCameras = new ArrayList<>();
-    private ViewDataBinding binding;
 
     public TrafficCameraAdapter(@NonNull List<TrafficCamera> trafficCameras) {
         this.trafficCameras = trafficCameras;

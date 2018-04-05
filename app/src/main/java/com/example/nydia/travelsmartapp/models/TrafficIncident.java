@@ -1,9 +1,14 @@
 package com.example.nydia.travelsmartapp.models;
 
+import android.annotation.SuppressLint;
+import android.os.Parcel;
+import android.os.Parcelable;
+
 import com.google.gson.annotations.Expose;
 import com.google.gson.annotations.SerializedName;
 
-public class TrafficIncident {
+@SuppressLint("ParcelCreator")
+public class TrafficIncident implements Parcelable {
 
     @SerializedName("Type")
     @Expose
@@ -48,5 +53,15 @@ public class TrafficIncident {
 
     public void setMessage(String message) {
         this.message = message;
+    }
+
+    @Override
+    public int describeContents() {
+        return 0;
+    }
+
+    @Override
+    public void writeToParcel(Parcel parcel, int i) {
+
     }
 }

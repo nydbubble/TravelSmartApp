@@ -1,13 +1,14 @@
 <?xml version="1.0" encoding="utf-8"?>
 <layout
     xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools">
 
     <data>
 
     </data>
 <RelativeLayout
-    xmlns:app="http://schemas.android.com/apk/res-auto"
+
     android:layout_width="match_parent"
     android:layout_height="match_parent">
 
@@ -39,32 +40,10 @@
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:gravity="bottom"
-        sothree:umanoPanelHeight="68dp"
+        sothree:umanoPanelHeight="0dp"
         sothree:umanoShadowHeight="4dp"
         sothree:umanoFadeColor="@android:color/transparent"
-        sothree:umanoScrollableView="@id/recycler_view"
-        >
-
-    <!--<android.support.v7.widget.Toolbar
-        android:id="@+id/toolbar"
-        android:layout_width="match_parent"
-        android:layout_height="?attr/actionBarSize"
-        android:background="?attr/colorPrimary"
-        app:layout_constraintLeft_toLeftOf="parent"
-        app:layout_constraintRight_toRightOf="parent"
-        app:layout_constraintTop_toTopOf="parent"/>-->
-
-
-
-            <!--<TextView
-                android:layout_width="match_parent"
-                android:layout_height="match_parent"
-                android:gravity="center"
-                android:text="Main Content"
-                android:textSize="16sp" />-->
-
-
-
+        sothree:umanoDragView="@id/tabs">
 
     <fragment
         android:layout_width="match_parent"
@@ -93,7 +72,7 @@
             app:pressedTranslationZ="12dp" />
 
         <!-- TODO: change toggle button image to bus/car (ofc) -->
-        <ToggleButton
+        <!--<ToggleButton
             android:id="@+id/button_favorite"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
@@ -107,32 +86,29 @@
             android:enabled="false"
             android:text=""
             android:textOff=""
-            android:textOn=""/>
+            android:textOn=""/>-->
     </fragment>
 
         <RelativeLayout
             android:layout_width="match_parent"
-            android:layout_height="match_parent">
+            android:layout_height="match_parent"
+            android:id="@+id/sliding_panel">
             <android.support.design.widget.TabLayout
                 android:id="@+id/tabs"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 app:tabMode="fixed"
-                app:tabGravity="fill"/>
+                app:tabGravity="fill" />
             <android.support.v4.view.ViewPager
                 android:id="@+id/viewpager"
                 android:layout_width="match_parent"
-                android:layout_marginTop="40dp"
+                android:layout_marginTop="50dp"
                 android:layout_height="match_parent"
-                app:layout_behavior="@string/appbar_scrolling_view_behavior" />
-
-
-
+                />
         </RelativeLayout>
 
 
     <!-- Implementation of find my location button -->
     </com.sothree.slidinguppanel.SlidingUpPanelLayout>
-
 </RelativeLayout>
 </layout>
