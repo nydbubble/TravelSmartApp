@@ -32,6 +32,7 @@ import android.widget.Toast;
 
 import com.example.nydia.travelsmartapp.R;
 import com.example.nydia.travelsmartapp.databinding.ActivityMainBinding;
+import com.example.nydia.travelsmartapp.models.Bounds;
 import com.example.nydia.travelsmartapp.models.Carpark;
 import com.example.nydia.travelsmartapp.models.CarparkAvailabilityResponse;
 import com.example.nydia.travelsmartapp.models.CurrentLocationListener;
@@ -44,7 +45,7 @@ import com.example.nydia.travelsmartapp.models.RouteDecode;
 import com.example.nydia.travelsmartapp.models.TrafficCamera;
 import com.example.nydia.travelsmartapp.models.TrafficIncident;
 import com.example.nydia.travelsmartapp.models.TrafficIncidentResponse;
-import com.example.nydia.travelsmartapp.viewmodel.TrafficCameraViewModel;
+import com.example.nydia.travelsmartapp.viewmodel.MainViewModel;
 import com.google.android.gms.location.FusedLocationProviderClient;
 import com.google.android.gms.common.api.Status;
 import com.google.android.gms.location.places.AutocompleteFilter;
@@ -58,6 +59,7 @@ import com.google.android.gms.maps.SupportMapFragment;
 import com.google.android.gms.maps.UiSettings;
 import com.google.android.gms.maps.model.CameraPosition;
 import com.google.android.gms.maps.model.LatLng;
+import com.google.android.gms.maps.model.LatLngBounds;
 import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.MarkerOptions;
 import com.google.android.gms.maps.model.Polyline;
@@ -67,7 +69,6 @@ import com.sothree.slidinguppanel.SlidingUpPanelLayout;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.concurrent.LinkedBlockingDeque;
 
 public class MainActivity extends AppCompatActivity implements LifecycleOwner, OnMapReadyCallback, GoogleMap.OnMapLoadedCallback {
 
@@ -81,8 +82,6 @@ public class MainActivity extends AppCompatActivity implements LifecycleOwner, O
     private final int PERMISSIONS_REQUEST_ACCESS_FINE_LOCATION = 101;
     private Location mLastKnownLocation;
 
-    private ImageView imgMyLocation;
-    private FusedLocationProviderClient mFusedLocationProviderClient;
     private LatLng mDefaultLocation = new LatLng(1.348482, 103.683049);
 
     private static final String KEY_CAMERA_POSITION = "camera_position";
@@ -108,12 +107,15 @@ public class MainActivity extends AppCompatActivity implements LifecycleOwner, O
     //private BottomSheetBehavior mBottomSheetBehavior;
     //private SlidingUpPanelLayout mSlidingUpPanelLayout;
 
-    private RecyclerView recyclerView;
     private Polyline polyline;
-    private TrafficCameraViewModel viewModel;
+    private MainViewModel viewModel;
     private List<TrafficCamera> trafficCamera = new ArrayList<>();
     private JourneyInfoFragment journeyInfoFragment;
     private List<TrafficIncident> trafficIncident = new ArrayList<>();
+    private DestinationInfoFragment destinationInfoFragment;
+    private List<Carpark> availableCarparks = new ArrayList<>();
+    private Leg.StartLocation startLocation;
+    private Leg.EndLocation endLocation;
 
 
     @Override
@@ -133,7 +135,7 @@ public class MainActivity extends AppCompatActivity implements LifecycleOwner, O
 
         mGpsOn = checkLocationSettings();
 
-        SupportMapFragment mapFragment = (SupportMapFragment) getSupportFragmentManager().findFragmentById(R.id.g_map);
+        mapFragment = (SupportMapFragment) getSupportFragmentManager().findFragmentById(R.id.g_map);
         mapFragment.getMapAsync(this);
 
         autocompleteFragment = (PlaceAutocompleteFragment)
@@ -156,11 +158,7 @@ public class MainActivity extends AppCompatActivity implements LifecycleOwner, O
                 Log.i(TAG, "Place: " + place.getAddress().toString());
                 Log.i(TAG, "Place coordinates: " + place.getLatLng().toString());
                 getDirectionsResults(origin,destination);
-                //plotDirections(origin, destination, defaultTravelMode);
-
-
                 //transportationtoogleFAB();
-
             }
 
             @Override
@@ -170,13 +168,6 @@ public class MainActivity extends AppCompatActivity implements LifecycleOwner, O
             }
         });
 
-        //BottomSheetDialogFragment bottomSheetDialogFragment = new TutsPlusBottomSheetDialogFragment();
-        //bottomSheetDialogFragment.show(getSupportFragmentManager(), bottomSheetDialogFragment.getTag());
-        /*View bottomSheet = findViewById( R.id.bottom_sheet );
-        mBottomSheetBehavior = BottomSheetBehavior.from(bottomSheet);
-        mBottomSheetBehavior.setPeekHeight(300);
-        mBottomSheetBehavior.setState(BottomSheetBehavior.STATE_COLLAPSED);*/
-
         relativeLayout = (RelativeLayout) findViewById(R.id.sliding_panel);
         relativeLayout.setVisibility(View.VISIBLE);
 
@@ -185,19 +176,10 @@ public class MainActivity extends AppCompatActivity implements LifecycleOwner, O
 
         TabLayout tabLayout = (TabLayout) findViewById(R.id.tabs);
         tabLayout.setupWithViewPager(viewPager);
-
-        /*recyclerView = (RecyclerView) findViewById(R.id.recycler_view);
-        TrafficCameraAdapter mAdapter = new TrafficCameraAdapter(trafficCamera);
-        RecyclerView.LayoutManager mLayoutManager = new GridLayoutManager(getApplicationContext(), 3);
-        recyclerView.setLayoutManager(mLayoutManager);
-        //recyclerView.setItemAnimator(new DefaultItemAnimator());
-        recyclerView.setAdapter(mAdapter);
-        //recyclerView.addItemDecoration(new DividerItemDecoration(getApplicationContext(), LinearLayoutManager.VERTICAL));
-*/
         onSlideListener();
 
         viewModel =
-                ViewModelProviders.of(this).get(TrafficCameraViewModel.class);
+                ViewModelProviders.of(this).get(MainViewModel.class);
 
     }
 
@@ -223,7 +205,8 @@ public class MainActivity extends AppCompatActivity implements LifecycleOwner, O
         ViewPagerAdapter adapter = new ViewPagerAdapter(getSupportFragmentManager());
         journeyInfoFragment = new JourneyInfoFragment().newInstance(new Leg(), trafficCamera, trafficIncident);
         adapter.addFrag(journeyInfoFragment, "Journey Info");
-        adapter.addFrag(new DestinationInfoFragment(), "destination Info");
+        destinationInfoFragment = new DestinationInfoFragment().newInstance(new Forecast(), availableCarparks);
+        adapter.addFrag(destinationInfoFragment, "destination Info");
         viewPager.setAdapter(adapter);
     }
 
@@ -292,318 +275,23 @@ public class MainActivity extends AppCompatActivity implements LifecycleOwner, O
         return true;
     }
 
+    private void getDeviceLocation() {
+        if (mLocationPermissionGranted) {
+            CurrentLocationListener.getInstance(getApplicationContext()).observe(this, new Observer<Location>() {
 
-    @Override
-    public void onMapReady(GoogleMap googleMap) {
-        mMap = googleMap;
-        mMap.setOnMapLoadedCallback(this);
-    }
-
-    @Override
-    public void onMapLoaded() {
-        //observeViewModel(viewModel);
-        setupGoogleMapScreenSettings();
-        intializeMapCamera();
-        //getDeviceLocation();
-    }
-
-
-    private void plotDirections(DirectionsResults directions) {
-        if (directions != null) {
-            addPolyline(directions, mMap);
-            slidingLayout.setPanelHeight(200);
-            //TextView testview = (TextView)findViewById(R.id.testview);
-            //testview.setText(directions.routes[overview].legs[overview].steps[overview].htmlInstructions);
-            /*movieList.clear();
-            for (int i=0; i<directions.routes[overview].legs[overview].steps.length; i++) {
-                if (publicTransport) {
-                    //TODO: implement details on directions for public transportation
-                    for (int j = 0; j < directions.routes[overview].legs[overview].steps[i].steps.length; j++)
-                        movieList.add(new Movie(directions.routes[overview].legs[overview].steps[i].steps[j].transitDetails., "", ""));
+                @Override
+                public void onChanged(@Nullable Location location) {
+                    if (location != null) {
+                        Log.d(TAG, "onChanged:location updated " + location);
+                        //getWeather(location.getLatitude(), location.getLongitude());
+                        mLastKnownLocation = location;
+                        //CurrentLocationListener.getInstance(getApplicationContext()).removeObserver(this);
+                    } else
+                        Toast.makeText(getApplicationContext(), "Location is null", Toast.LENGTH_SHORT).show();
                 }
-                //TODO: deal with the HTML output
-                movieList.add(new Movie(directions.routes[overview].legs[overview].steps[i].htmlInstructions, "", ""));
-            }
-                mAdapter.notifyDataSetChanged();*/
-        }
+            });
+        } else getLocationPermission();
     }
-
-    private void intializeMapCamera(){
-        if (mMap == null) {
-            return;
-        }
-        //initiate map camera
-        if (mLastKnownLocation != null) {
-            Log.d(TAG, "Camera zooming to Last Known Location");
-            mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(new LatLng(mLastKnownLocation.getLatitude(), mLastKnownLocation.getLongitude()), DEFAULT_ZOOM));
-        } else if (mCameraPosition != null) {
-            Log.d(TAG, "Camera zooming to saved camera position");
-            mMap.moveCamera(CameraUpdateFactory.newCameraPosition(mCameraPosition));
-        } else {
-            Log.d(TAG, "Camera zooming to saved default location");
-            mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(mDefaultLocation, DEFAULT_ZOOM));
-
-        }
-    }
-
-    private void setupGoogleMapScreenSettings() {
-        if (mMap == null) {
-            return;
-        }
-        getLocationPermission();
-        try {
-            //TODO: camera zoom in default should be user's location
-            if (mLocationPermissionGranted) {
-                getDeviceLocation();
-                mMap.setMyLocationEnabled(true);
-                //Log.d(TAG, "Current location:" + mLastKnownLocation);
-                //mMap.getUiSettings().setMyLocationButtonEnabled(true);
-            }
-        } catch (SecurityException e) {
-            Log.e("Exception: %s", e.getMessage());
-        }
-        userLocationFAB();
-        mMap.setBuildingsEnabled(true);
-        mMap.setIndoorEnabled(true);
-        //mMap.setTrafficEnabled(true);
-        UiSettings mUiSettings = mMap.getUiSettings();
-        //mUiSettings.setZoomControlsEnabled(true);
-        //mUiSettings.setCompassEnabled(true);
-        mUiSettings.setMapToolbarEnabled(false);
-        //mUiSettings.setMyLocationButtonEnabled(false);
-        mUiSettings.setScrollGesturesEnabled(true);
-        mUiSettings.setZoomGesturesEnabled(true);
-        mUiSettings.setTiltGesturesEnabled(true);
-        mUiSettings.setRotateGesturesEnabled(true);
-    }
-
-    private void getDirectionsResults(String origin, String destination){
-        viewModel.getDirectionsResultsObservable(origin, destination).observe(this, new Observer<DirectionsResults>() {
-            @Override
-            public void onChanged(@Nullable DirectionsResults directionsResults) {
-                plotDirections(directionsResults);
-                journeyInfoFragment.setLeg(directionsResults.getRoutes().get(0).getLegs().get(0));
-            }
-        });
-    }
-
-    /*private void addMarkersToMap(GoogleMapsAPI transitMode, GoogleMap mMap) {
-        //Delete existing markers
-        for(Marker marker : markers)
-            marker.remove();
-
-        ArrayList<MarkerOptions> decodedMarkers = transitMode.getMarkers();
-        for (MarkerOptions marker : decodedMarkers)
-            markers.add(mMap.addMarker(marker));
-
-    }
-
-    private void positionCamera(GoogleMapsAPI transitMode, GoogleMap mMap) {
-        //TODO: ask whether camera should zoom to destination or to bounded box of directions
-        mMap.animateCamera(CameraUpdateFactory.newLatLngBounds(transitMode.getDirectionsBounds(), 100));
-        //mMap.animateCamera(CameraUpdateFactory.newLatLngZoom(new LatLng(route.legs[overview].endLocation.lat, route.legs[overview].endLocation.lng), 12));
-    }
-
-    private void addPolyline(GoogleMapsAPI transitMode, GoogleMap mMap) {
-        //Delete existing polylines
-        for(Polyline line: polylines)
-            line.remove();
-        polylines.clear();
-        ArrayList<List<LatLng>> routeOptions = transitMode.getPolyLines();
-        for (List<LatLng> decodedPath: routeOptions){
-            //List<LatLng> decodedPath = PolyUtil.decode(results.routes[i].overviewPolyline.getEncodedPath());
-            polylines.add(mMap.addPolyline(new PolylineOptions()
-                    .addAll(decodedPath)
-                    .width(20)
-                    .color(Color.BLUE)
-                    .geodesic(true)));
-        }
-
-    }*/
-
-    private void addPolyline(DirectionsResults results, GoogleMap mMap) {
-        //Delete existing polylines
-        if (polyline != null)
-            polyline.remove();
-        Location location;
-        Route route = results.getRoutes().get(0);
-        String polylinestring = route.getOverviewPolyline().getPoints();
-        ArrayList<LatLng> routelist = new ArrayList<LatLng>();
-        ArrayList<LatLng> decodelist = RouteDecode.decodePoly(polylinestring);
-        routelist.add(new LatLng(route.getLegs().get(0).getStartLocation().getLat(), route.getLegs().get(0).getStartLocation().getLng()));
-        routelist.addAll(decodelist);
-        routelist.add(new LatLng(route.getLegs().get(0).getEndLocation().getLat(), route.getLegs().get(0).getEndLocation().getLng()));
-
-        PolylineOptions decodedPath = new PolylineOptions().width(15).color(
-                Color.RED);
-        for (int i = 0; i < routelist.size(); i++) {
-            decodedPath.add(routelist.get(i));
-        }
-        polyline = mMap.addPolyline(decodedPath);
-        /*LatLng point = new LatLng(1.301921, 103.912905);
-        boolean result = PolyUtil.isLocationOnPath(point, routelist, false, 100);
-        if(result)
-            mMap.addMarker(new MarkerOptions().position(point));
-        point = new LatLng(1.297159, 103.851370);
-        result = PolyUtil.isLocationOnPath(point, routelist, false, 100);
-        if(result)
-            mMap.addMarker(new MarkerOptions().position(point));*/
-        //getNearestCameras(viewModel, routelist);
-        getPlanningArea(viewModel, route.getLegs().get(0).getEndLocation().getLat(), route.getLegs().get(0).getEndLocation().getLng());
-        getNearestIncidents(viewModel, routelist);
-        getNearestCameras(viewModel, routelist);
-        //getCarparkAvailability(viewModel);
-        getNearestAvailableCarpark(viewModel, new LatLng(route.getLegs().get(0).getEndLocation().getLat(), route.getLegs().get(0).getEndLocation().getLng()));
-    }
-
-    private void getNearestIncidents(TrafficCameraViewModel viewModel, ArrayList<LatLng> routelist) {
-        viewModel.getNearestIncidentsObservable(routelist).observe(this, new Observer<List<TrafficIncident>>() {
-
-            @Override
-            public void onChanged(@Nullable List<TrafficIncident> incidents) {
-                if (incidents.size() > 0) {
-                    Log.d(TAG, "Nearest incident");
-                    for (TrafficIncident incident: incidents) {
-                        mMap.addMarker(new MarkerOptions().position(new LatLng(incident.getLatitude(), incident.getLongitude())).title(incident.getMessage()));
-                    }
-                    Log.d(TAG, "Updating traffic incident display");
-                    trafficIncident.clear();
-                    trafficIncident.addAll(incidents);
-                    journeyInfoFragment.setTrafficIncidents((ArrayList)trafficIncident);
-                    //showTrafficIncidents(incidents);
-                }
-            }
-        });
-    }
-
-    private void getNearestCameras(TrafficCameraViewModel viewModel, ArrayList<LatLng> routelist) {
-        viewModel.getNearestCamerasObservable(routelist).observe(this, new Observer<List<TrafficCamera>>() {
-
-            @Override
-            public void onChanged(@Nullable List<TrafficCamera> cameras) {
-                if (cameras.size() > 0) {
-                    //recyclerView.setVisibility(View.VISIBLE);
-                }
-                Log.d(TAG, "Updating traffic camera display");
-                trafficCamera.clear();
-                trafficCamera.addAll(cameras);
-                journeyInfoFragment.setTrafficCameras((ArrayList)trafficCamera);
-                //recyclerView.getAdapter().notifyDataSetChanged();
-            }
-        });
-    }
-
-    private void getNearestAvailableCarpark(final TrafficCameraViewModel viewModel, LatLng destination) {
-        viewModel.getNearestAvailableCarparkObservable(destination).observe(this, new Observer<List<Carpark>>() {
-
-            @Override
-            public void onChanged(@Nullable List<Carpark> carparks) {
-                if (carparks.size() > 0) {
-                    for (Carpark carpark : carparks) {
-                        getAddress(viewModel, carpark.getGeometries().get(0).getCoordinates());
-                        //String address = getAddress(viewModel, carpark.getGeometries().get(0).getCoordinates());
-                        //mMap.addMarker(new MarkerOptions().position(latlng).title(address));
-                    }
-                }
-                //showTrafficIncidents(incidents);
-            }
-        });
-    }
-
-    private void getAddress(TrafficCameraViewModel viewModel, final String coordinates) {
-        viewModel.getAddress(coordinates).observe(this, new Observer<String>() {
-            @Override
-            public void onChanged(@Nullable String reverseGeocoding) {
-                if (reverseGeocoding != null) {
-                    String[] latlong = coordinates.split(",");
-                    LatLng latlng = new LatLng(Double.parseDouble(latlong[0]), Double.parseDouble(latlong[1]));
-                    mMap.addMarker(new MarkerOptions().position(latlng).title(reverseGeocoding));
-
-                }}
-                //showTrafficIncidents(incidents);
-        });
-    }
-
-    private void getPlanningArea(final TrafficCameraViewModel viewModel, Double lat, Double lng){
-        viewModel.getPlanningArea(lat,lng).observe(this, new Observer<List<PlanningArea>>() {
-            @Override
-            public void onChanged(@Nullable List<PlanningArea> planningArea) {
-                Log.i(TAG, "PlanningArea: " + planningArea.get(0).getPlnAreaN());
-                getWeatherForecast(viewModel, planningArea.get(0).getPlnAreaN());
-            }
-            //showTrafficIncidents(incidents);
-        });
-    }
-
-    private void getWeatherForecast(TrafficCameraViewModel viewModel, String area){
-        viewModel.getWeatherForecast(area).observe(this, new Observer<Forecast>() {
-            @Override
-            public void onChanged(@Nullable Forecast forecast) {
-                Log.i(TAG, "Weather forecast: " + forecast.getForecast());
-            }
-        });
-    }
-
-
-    private String getEndLocationTitle(DirectionsResult results) {
-        //TODO: these results will be displayed in SlideUpPanel
-        return "Time :" + results.routes[overview].legs[overview].duration.humanReadable + " Distance :" + results.routes[overview].legs[overview].distance.humanReadable + " Arrival time :" + results.routes[overview].legs[overview].arrivalTime; //TODO: don't use arrivalTime
-    }
-
-    private void getIncidents(TrafficCameraViewModel viewModel) {
-        viewModel.getTrafficIncidentObservable().observe(this, new Observer<TrafficIncidentResponse>() {
-
-            @Override
-            public void onChanged(@Nullable TrafficIncidentResponse incidents) {
-                if (incidents != null) {
-                    Log.d(TAG, "New incident");
-                    for (int i = 0; i < incidents.getTrafficIncidents().size(); i++) {
-                        mMap.addMarker(new MarkerOptions().position(new LatLng(incidents.getTrafficIncidents().get(i).getLatitude(), incidents.getTrafficIncidents().get(i).getLongitude())).title(incidents.getTrafficIncidents().get(i).getMessage()));
-                    }
-                    showTrafficIncidents(incidents);
-                }
-            }
-        });
-    }
-
-    private void getCarparkAvailability(TrafficCameraViewModel viewModel) {
-        viewModel.getCarparkAvailabilityObservable().observe(this, new Observer<CarparkAvailabilityResponse>() {
-
-            @Override
-            public void onChanged(@Nullable CarparkAvailabilityResponse carparkAvailability) {
-                if (carparkAvailability != null) {
-                    showCarparkAvailability(carparkAvailability);
-                    }
-                    //showTrafficIncidents(incidents);
-            }
-        });
-    }
-
-    private void showCarparkAvailability(CarparkAvailabilityResponse carparkAvailability) {
-        for (int i = 0; i < carparkAvailability.getResult().size(); i++) {
-            if (carparkAvailability.getResult().get(i).getGeometries() != null) {
-                Carpark.Geometry carpark = carparkAvailability.getResult().get(i).getGeometries().get(0);
-                Double lat = carpark.getLatitude();
-                Double lng = carpark.getLongitude();
-                //Log.d(TAG, "Carpark available: " + lat + "," + lng);
-                mMap.addMarker(new MarkerOptions().position(new LatLng(lat, lng)));
-            }
-        }
-    }
-
-    private void showTrafficIncidents(TrafficIncidentResponse incidents) {
-        if (incidents != null) {
-            //Log.d(TAG, "Incident: " + incidents.get(0).getMessage());
-            for (int i = 0; i < incidents.getTrafficIncidents().size(); i++) {
-                TrafficIncident incident = incidents.getTrafficIncidents().get(i);
-                Double lat = incident.getLatitude();
-                Double lng = incident.getLongitude();
-                //incidentslocation.add(new LatLng(lat, lng));
-                mMap.addMarker(new MarkerOptions().position(new LatLng(lat, lng)).snippet(incident.getMessage()));
-            }
-        }
-    }
-
 
     private void getLocationPermission() {
     /*
@@ -668,6 +356,316 @@ public class MainActivity extends AppCompatActivity implements LifecycleOwner, O
         }
     }
 
+    @Override
+    public void onMapReady(GoogleMap googleMap) {
+        mMap = googleMap;
+        mMap.setOnMapLoadedCallback(this);
+    }
+
+    @Override
+    public void onMapLoaded() {
+        setupGoogleMapScreenSettings();
+        intializeMapCamera();
+        //getDeviceLocation();
+    }
+
+    private void intializeMapCamera(){
+        if (mMap == null) {
+            return;
+        }
+        //initiate map camera
+        if (mLastKnownLocation != null) {
+            Log.d(TAG, "Camera zooming to Last Known Location");
+            mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(new LatLng(mLastKnownLocation.getLatitude(), mLastKnownLocation.getLongitude()), DEFAULT_ZOOM));
+        } else if (mCameraPosition != null) {
+            Log.d(TAG, "Camera zooming to saved camera position");
+            mMap.moveCamera(CameraUpdateFactory.newCameraPosition(mCameraPosition));
+        } else {
+            Log.d(TAG, "Camera zooming to saved default location");
+            mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(mDefaultLocation, DEFAULT_ZOOM));
+
+        }
+    }
+
+    private void setupGoogleMapScreenSettings() {
+        if (mMap == null) {
+            return;
+        }
+        getLocationPermission();
+        try {
+            //TODO: camera zoom in default should be user's location
+            if (mLocationPermissionGranted) {
+                getDeviceLocation();
+                mMap.setMyLocationEnabled(true);
+            }
+        } catch (SecurityException e) {
+            Log.e("Exception: %s", e.getMessage());
+        }
+        userLocationFAB();
+        mMap.setBuildingsEnabled(true);
+        mMap.setIndoorEnabled(true);
+        //mMap.setTrafficEnabled(true);
+        UiSettings mUiSettings = mMap.getUiSettings();
+        mUiSettings.setMapToolbarEnabled(false);
+        mUiSettings.setMyLocationButtonEnabled(false);
+        mUiSettings.setScrollGesturesEnabled(true);
+        mUiSettings.setZoomGesturesEnabled(true);
+        mUiSettings.setTiltGesturesEnabled(true);
+        mUiSettings.setRotateGesturesEnabled(true);
+    }
+
+    private void plotDirections(DirectionsResults directions) {
+        if (directions != null) {
+            ArrayList<LatLng> routelist = initDirections(directions);
+            setupTabs(routelist);
+            addPolyline(routelist);
+            addMarkersToMap(startLocation, endLocation);
+            positionCamera(directions);
+            slidingLayout.setPanelHeight(200);
+            //TextView testview = (TextView)findViewById(R.id.testview);
+            //testview.setText(directions.routes[overview].legs[overview].steps[overview].htmlInstructions);
+            /*movieList.clear();
+            for (int i=0; i<directions.routes[overview].legs[overview].steps.length; i++) {
+                if (publicTransport) {
+                    //TODO: implement details on directions for public transportation
+                    for (int j = 0; j < directions.routes[overview].legs[overview].steps[i].steps.length; j++)
+                        movieList.add(new Movie(directions.routes[overview].legs[overview].steps[i].steps[j].transitDetails., "", ""));
+                }
+                //TODO: deal with the HTML output
+                movieList.add(new Movie(directions.routes[overview].legs[overview].steps[i].htmlInstructions, "", ""));
+            }
+                mAdapter.notifyDataSetChanged();*/
+        }
+    }
+
+    private ArrayList<LatLng> initDirections(DirectionsResults directions) {
+        Route route = directions.getRoutes().get(0);
+        String polylinestring = route.getOverviewPolyline().getPoints();
+        ArrayList<LatLng> routelist = new ArrayList<LatLng>();
+        startLocation = route.getLegs().get(0).getStartLocation();
+        endLocation = route.getLegs().get(0).getEndLocation();
+        ArrayList<LatLng> decodelist = RouteDecode.decodePoly(polylinestring);
+        routelist.add(new LatLng(startLocation.getLat(), startLocation.getLng()));
+        routelist.addAll(decodelist);
+        routelist.add(new LatLng(endLocation.getLat(), endLocation.getLng()));
+        return routelist;
+    }
+
+    private void setupTabs(ArrayList<LatLng> routelist){
+        getPlanningArea(viewModel, endLocation.getLat(), endLocation.getLng());
+        getNearestIncidents(viewModel, routelist);
+        getNearestCameras(viewModel, routelist);
+        getNearestAvailableCarpark(viewModel, new LatLng(endLocation.getLat(), endLocation.getLng()));
+    }
+
+    private void getDirectionsResults(String origin, String destination){
+        viewModel.getDirectionsResultsObservable(origin, destination).observe(this, new Observer<DirectionsResults>() {
+            @Override
+            public void onChanged(@Nullable DirectionsResults directionsResults) {
+                plotDirections(directionsResults);
+                journeyInfoFragment.setLeg(directionsResults.getRoutes().get(0).getLegs().get(0));
+            }
+        });
+    }
+
+    private void addMarkersToMap(Leg.StartLocation startLocation, Leg.EndLocation endLocation) {
+        //Delete existing markers
+        for(Marker marker : markers)
+            marker.remove();
+
+        //ArrayList<MarkerOptions> decodedMarkers = transitMode.getMarkers();
+        MarkerOptions startMarker = new MarkerOptions().position(new LatLng(startLocation.getLat(), startLocation.getLng()));
+        MarkerOptions endMarker = new MarkerOptions().position(new LatLng(endLocation.getLat(), endLocation.getLng()));
+        markers.add(mMap.addMarker(startMarker));
+        markers.add(mMap.addMarker(endMarker));
+    }
+
+    private void positionCamera(DirectionsResults directions) {
+        //TODO: ask whether camera should zoom to destination or to bounded box of directions
+        Bounds boundary = directions.getRoutes().get(0).getBounds();
+        LatLng northeast = new LatLng(boundary.getNortheast().getLat(), boundary.getNortheast().getLng());
+        LatLng southwest = new LatLng(boundary.getSouthwest().getLat(), boundary.getSouthwest().getLng());
+        mMap.animateCamera(CameraUpdateFactory.newLatLngBounds(new LatLngBounds(southwest, northeast), 100));
+        //mMap.animateCamera(CameraUpdateFactory.newLatLngZoom(new LatLng(route.legs[overview].endLocation.lat, route.legs[overview].endLocation.lng), 12));
+    }
+
+    private void addPolyline(ArrayList<LatLng> routelist) {
+        //Delete existing polylines
+        if (polyline != null)
+            polyline.remove();
+
+        PolylineOptions decodedPath = new PolylineOptions()
+                .width(20)
+                .color(Color.BLUE)
+                .geodesic(true);
+        for (int i = 0; i < routelist.size(); i++) {
+            decodedPath.add(routelist.get(i));
+        }
+        polyline = mMap.addPolyline(decodedPath);
+    }
+
+    private void getNearestIncidents(MainViewModel viewModel, ArrayList<LatLng> routelist) {
+        viewModel.getNearestIncidentsObservable(routelist).observe(this, new Observer<List<TrafficIncident>>() {
+
+            @Override
+            public void onChanged(@Nullable List<TrafficIncident> incidents) {
+                if (incidents.size() > 0) {
+                    Log.d(TAG, "Nearest incident");
+                    for (TrafficIncident incident: incidents) {
+                        mMap.addMarker(new MarkerOptions().position(new LatLng(incident.getLatitude(), incident.getLongitude())).title(incident.getMessage()));
+                    }
+                }
+                Log.d(TAG, "Updating traffic incident display");
+                trafficIncident.clear();
+                trafficIncident.addAll(incidents);
+                journeyInfoFragment.setTrafficIncidents((ArrayList)trafficIncident);
+            }
+        });
+    }
+
+    private void getNearestCameras(MainViewModel viewModel, ArrayList<LatLng> routelist) {
+        viewModel.getNearestCamerasObservable(routelist).observe(this, new Observer<List<TrafficCamera>>() {
+
+            @Override
+            public void onChanged(@Nullable List<TrafficCamera> cameras) {
+                if (cameras.size() > 0) {
+                }
+                Log.d(TAG, "Updating traffic camera display");
+                trafficCamera.clear();
+                trafficCamera.addAll(cameras);
+                journeyInfoFragment.setTrafficCameras((ArrayList)trafficCamera);
+            }
+        });
+    }
+
+    private void getNearestAvailableCarpark(final MainViewModel viewModel, LatLng destination) {
+        viewModel.getNearestAvailableCarparkObservable(destination).observe(this, new Observer<List<Carpark>>() {
+
+            @Override
+            public void onChanged(@Nullable List<Carpark> carparks) {
+                if (carparks.size() > 0) {
+                    for (Carpark carpark : carparks) {
+                        Double lat = carpark.getLatitude();
+                        Double lng = carpark.getLongitude();
+                        //Log.d(TAG, "Carpark available: " + lat + "," + lng);
+                        mMap.addMarker(new MarkerOptions().position(new LatLng(lat, lng)).title(carpark.getDevelopment()));
+
+                    }
+                }
+                Log.d(TAG, "Updating carparks display");
+                availableCarparks.clear();
+                availableCarparks.addAll(carparks);
+                destinationInfoFragment.setCarparks((ArrayList)availableCarparks);
+            }
+        });
+    }
+
+    private void getAddress(MainViewModel viewModel, final String coordinates) {
+        viewModel.getAddress(coordinates).observe(this, new Observer<String>() {
+            @Override
+            public void onChanged(@Nullable String reverseGeocoding) {
+                if (reverseGeocoding != null) {
+                    String[] latlong = coordinates.split(",");
+                    LatLng latlng = new LatLng(Double.parseDouble(latlong[0]), Double.parseDouble(latlong[1]));
+                    mMap.addMarker(new MarkerOptions().position(latlng).title(reverseGeocoding));
+
+                }}
+                //showTrafficIncidents(incidents);
+        });
+    }
+
+    private void getPlanningArea(final MainViewModel viewModel, Double lat, Double lng){
+        viewModel.getPlanningArea(lat,lng).observe(this, new Observer<List<PlanningArea>>() {
+            @Override
+            public void onChanged(@Nullable List<PlanningArea> planningArea) {
+                getWeatherForecast(viewModel, planningArea.get(0).getPlnAreaN());
+                getPsi(viewModel, planningArea.get(0).getPlnAreaN());
+            }
+            //showTrafficIncidents(incidents);
+        });
+    }
+
+    private void getWeatherForecast(MainViewModel viewModel, String area){
+        viewModel.getWeatherForecast(area).observe(this, new Observer<Forecast>() {
+            @Override
+            public void onChanged(@Nullable Forecast forecast) {
+                if(forecast!=null)
+                    destinationInfoFragment.setForecast(forecast);
+            }
+        });
+    }
+
+    private void getPsi(MainViewModel viewModel, String area){
+        viewModel.getPsi(area).observe(this, new Observer<String>() {
+            @Override
+            public void onChanged(@Nullable String psi) {
+                if(psi!=null)
+                    destinationInfoFragment.setPsi(psi);
+            }
+        });
+    }
+
+
+    private String getEndLocationTitle(DirectionsResult results) {
+        //TODO: these results will be displayed in SlideUpPanel
+        return "Time :" + results.routes[overview].legs[overview].duration.humanReadable + " Distance :" + results.routes[overview].legs[overview].distance.humanReadable + " Arrival time :" + results.routes[overview].legs[overview].arrivalTime; //TODO: don't use arrivalTime
+    }
+
+    private void getIncidents(MainViewModel viewModel) {
+        viewModel.getTrafficIncidentObservable().observe(this, new Observer<TrafficIncidentResponse>() {
+
+            @Override
+            public void onChanged(@Nullable TrafficIncidentResponse incidents) {
+                if (incidents != null) {
+                    Log.d(TAG, "New incident");
+                    for (int i = 0; i < incidents.getTrafficIncidents().size(); i++) {
+                        mMap.addMarker(new MarkerOptions().position(new LatLng(incidents.getTrafficIncidents().get(i).getLatitude(), incidents.getTrafficIncidents().get(i).getLongitude())).title(incidents.getTrafficIncidents().get(i).getMessage()));
+                    }
+                    showTrafficIncidents(incidents);
+                }
+            }
+        });
+    }
+
+    private void getCarparkAvailability(MainViewModel viewModel) {
+        viewModel.getCarparkAvailabilityObservable().observe(this, new Observer<CarparkAvailabilityResponse>() {
+
+            @Override
+            public void onChanged(@Nullable CarparkAvailabilityResponse carparkAvailability) {
+                if (carparkAvailability != null) {
+                    Log.i(TAG, "Carpark available " + carparkAvailability.getValue().get(0).getLocation());
+                    showCarparkAvailability(carparkAvailability);
+                    }
+                    //showTrafficIncidents(incidents);
+            }
+        });
+    }
+
+    private void showCarparkAvailability(CarparkAvailabilityResponse carparkAvailability) {
+        for (int i = 0; i < carparkAvailability.getValue().size(); i++) {
+            Carpark carpark = carparkAvailability.getValue().get(i);
+            Double lat = carpark.getLatitude();
+            Double lng = carpark.getLongitude();
+            //Log.d(TAG, "Carpark available: " + lat + "," + lng);
+            mMap.addMarker(new MarkerOptions().position(new LatLng(lat, lng)).title(carpark.getDevelopment()));
+
+        }
+    }
+
+    private void showTrafficIncidents(TrafficIncidentResponse incidents) {
+        if (incidents != null) {
+            //Log.d(TAG, "Incident: " + incidents.get(0).getMessage());
+            for (int i = 0; i < incidents.getTrafficIncidents().size(); i++) {
+                TrafficIncident incident = incidents.getTrafficIncidents().get(i);
+                Double lat = incident.getLatitude();
+                Double lng = incident.getLongitude();
+                //incidentslocation.add(new LatLng(lat, lng));
+                mMap.addMarker(new MarkerOptions().position(new LatLng(lat, lng)).snippet(incident.getMessage()));
+            }
+        }
+    }
+
+
     private void userLocationFAB() {
         FloatingActionButton FAB = (FloatingActionButton) findViewById(R.id.myLocationButton);
         FAB.setOnClickListener(new View.OnClickListener() {
@@ -727,23 +725,7 @@ public class MainActivity extends AppCompatActivity implements LifecycleOwner, O
         });
     }*/
 
-    private void getDeviceLocation() {
-        if (mLocationPermissionGranted) {
-            CurrentLocationListener.getInstance(getApplicationContext()).observe(this, new Observer<Location>() {
 
-                @Override
-                public void onChanged(@Nullable Location location) {
-                    if (location != null) {
-                        Log.d(TAG, "onChanged:location updated " + location);
-                        //getWeather(location.getLatitude(), location.getLongitude());
-                        mLastKnownLocation = location;
-                        //CurrentLocationListener.getInstance(getApplicationContext()).removeObserver(this);
-                    } else
-                        Toast.makeText(getApplicationContext(), "Location is null", Toast.LENGTH_SHORT).show();
-                }
-            });
-        } else getLocationPermission();
-    }
 }
 
 

@@ -1,5 +1,6 @@
 package com.example.nydia.travelsmartapp.network;
 
+import com.example.nydia.travelsmartapp.models.PSIResponse;
 import com.example.nydia.travelsmartapp.models.WeatherForecast;
 
 import retrofit2.Call;
@@ -12,4 +13,7 @@ import retrofit2.http.GET;
 public interface DataGovService {
     @GET("environment/2-hour-weather-forecast")
     Call<WeatherForecast> getWeatherForecast();
+
+    @GET("environment/psi")
+    Call<PSIResponse> getPSI();
 }

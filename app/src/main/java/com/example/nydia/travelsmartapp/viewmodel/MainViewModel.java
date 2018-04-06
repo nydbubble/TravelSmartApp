@@ -3,40 +3,30 @@ package com.example.nydia.travelsmartapp.viewmodel;
 import android.app.Application;
 import android.arch.lifecycle.AndroidViewModel;
 import android.arch.lifecycle.LiveData;
-import android.databinding.BindingAdapter;
 import android.support.annotation.NonNull;
-import android.util.Log;
-import android.widget.ImageView;
 
-import com.example.nydia.travelsmartapp.R;
 import com.example.nydia.travelsmartapp.models.Carpark;
 import com.example.nydia.travelsmartapp.models.CarparkAvailabilityResponse;
 import com.example.nydia.travelsmartapp.models.DirectionsResults;
 import com.example.nydia.travelsmartapp.models.Forecast;
-import com.example.nydia.travelsmartapp.models.GeocodingResults;
 import com.example.nydia.travelsmartapp.models.PlanningArea;
 import com.example.nydia.travelsmartapp.models.TrafficCamera;
 import com.example.nydia.travelsmartapp.models.TrafficCameraResponse;
 import com.example.nydia.travelsmartapp.models.TrafficIncident;
 import com.example.nydia.travelsmartapp.models.TrafficIncidentResponse;
-import com.example.nydia.travelsmartapp.network.CarparkRepository;
 import com.example.nydia.travelsmartapp.network.DataGovRepository;
 import com.example.nydia.travelsmartapp.network.DirectionsRepository;
+import com.example.nydia.travelsmartapp.network.LTARepository;
 import com.example.nydia.travelsmartapp.network.OneMapRepository;
-import com.example.nydia.travelsmartapp.network.TrafficCameraRepository;
 import com.google.android.gms.maps.model.LatLng;
-import com.squareup.picasso.Picasso;
 
 import java.util.List;
-import java.util.concurrent.TimeUnit;
-
-import io.reactivex.Observable;
 
 /**
  * Created by nydia on 3/28/18.
  */
 
-public class TrafficCameraViewModel extends AndroidViewModel {
+public class MainViewModel extends AndroidViewModel {
     private LiveData<TrafficCameraResponse> trafficCameraObservable;
     private LiveData<DirectionsResults> directionsResultsObservable;
     private LiveData<List<TrafficCamera>> nearestCamerasObservable;
@@ -48,7 +38,7 @@ public class TrafficCameraViewModel extends AndroidViewModel {
     private LiveData<List<PlanningArea>> planningArea;
     private LiveData<Forecast> forecastObservable;
 
-    public TrafficCameraViewModel(@NonNull Application application) {
+    public MainViewModel(@NonNull Application application) {
         super(application);
 
         // If any transformation is needed, this can be simply done by Transformations class ...
@@ -58,32 +48,32 @@ public class TrafficCameraViewModel extends AndroidViewModel {
     }
 
     public LiveData<TrafficCameraResponse> getTrafficCameraObservable() {
-        trafficCameraObservable = TrafficCameraRepository.getInstance().getTrafficCamera();
+        trafficCameraObservable = LTARepository.getInstance().getTrafficCamera();
         return trafficCameraObservable;
     }
 
     public LiveData<TrafficIncidentResponse> getTrafficIncidentObservable() {
-        trafficIncidentObservable = TrafficCameraRepository.getInstance().getTrafficIncident();
+        trafficIncidentObservable = LTARepository.getInstance().getTrafficIncident();
         return trafficIncidentObservable;
     }
 
     public LiveData<List<TrafficCamera>> getNearestCamerasObservable(List<LatLng> polyline) {
-        nearestCamerasObservable = TrafficCameraRepository.getInstance().getNearestTrafficCamera(polyline);
+        nearestCamerasObservable = LTARepository.getInstance().getNearestTrafficCamera(polyline);
         return nearestCamerasObservable;
     }
 
     public LiveData<List<TrafficIncident>> getNearestIncidentsObservable(List<LatLng> polyline) {
-        nearestIncidentsObservable = TrafficCameraRepository.getInstance().getNearestTrafficIncident(polyline);
+        nearestIncidentsObservable = LTARepository.getInstance().getNearestTrafficIncident(polyline);
         return nearestIncidentsObservable;
     }
 
     public LiveData<CarparkAvailabilityResponse> getCarparkAvailabilityObservable() {
-        carparkAvailabilityObservable = CarparkRepository.getInstance().getCarparkAvailability();
+        carparkAvailabilityObservable = LTARepository.getInstance().getCarparkAvailability();
         return carparkAvailabilityObservable;
     }
 
     public LiveData<List<Carpark>> getNearestAvailableCarparkObservable(LatLng destination) {
-        nearestAvailableCarpark = CarparkRepository.getInstance().getNearestAvailableCarparks(destination);
+        nearestAvailableCarpark = LTARepository.getInstance().getNearestAvailableCarparks(destination);
         return nearestAvailableCarpark;
     }
 
@@ -105,6 +95,10 @@ public class TrafficCameraViewModel extends AndroidViewModel {
     public LiveData<Forecast> getWeatherForecast(String area){
         forecastObservable = DataGovRepository.getInstance().getWeatherForecast(area);
         return forecastObservable;
+    }
+
+    public LiveData<String> getPsi(String area){
+        return DataGovRepository.getInstance().getPsi(area);
     }
 
 

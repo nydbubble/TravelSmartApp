@@ -38,7 +38,7 @@
                     android:paddingRight="@dimen/activity_horizontal_margin"
                     android:paddingTop="@dimen/row_padding_vertical">
                     <TextView
-                        android:id="@+id/distance"
+                        android:id="@+id/forecast_area"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
                         android:layout_alignParentTop="true"
@@ -47,16 +47,24 @@
                         android:textStyle="bold"
                         android:text="@{forecast.area}"/>
                     <TextView
-                        android:id="@+id/duration"
+                        android:id="@+id/forecast_weather"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:layout_below="@+id/distance"
+                        android:layout_below="@+id/forecast_area"
                         android:textColor="@color/title"
                         android:text="@{forecast.forecast}"/>
+                    <TextView
+                        android:id="@+id/psi"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_below="@+id/forecast_weather"
+                        android:textColor="@color/title" />
                 </RelativeLayout>
             </android.support.v7.widget.CardView>
+
+            <!--Nearby carparks-->
             <android.support.v7.widget.CardView
-                android:id="@+id/traffic_camera_card"
+                android:id="@+id/carpark_card"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_margin="10dp">
@@ -74,17 +82,17 @@
                     android:paddingTop="@dimen/row_padding_vertical">
 
                     <TextView
-                        android:id="@+id/cameraID"
+                        android:id="@+id/carpark_title"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
                         android:layout_alignParentTop="true"
-                        android:text="Traffic Cameras"
+                        android:text="Nearby Carparks"
                         android:textColor="@color/title"
                         android:textSize="16sp"
                         android:textStyle="bold" />
 
                     <android.support.v7.widget.RecyclerView
-                        android:id="@+id/traffic_cameras"
+                        android:id="@+id/carparks"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:layout_marginTop="30dp"

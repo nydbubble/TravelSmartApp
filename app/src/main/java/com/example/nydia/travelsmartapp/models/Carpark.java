@@ -1,5 +1,8 @@
 package com.example.nydia.travelsmartapp.models;
 
+import android.annotation.SuppressLint;
+import android.os.Parcel;
+import android.os.Parcelable;
 import android.util.Log;
 
 import java.util.List;
@@ -7,27 +10,68 @@ import com.google.gson.annotations.Expose;
 import com.google.gson.annotations.SerializedName;
 import net.qxcg.svy21.*;
 
-public class Carpark {
-
-    @SerializedName("lotsAvailable")
+@SuppressLint("ParcelCreator")
+public class Carpark implements Parcelable{
+    @SerializedName("CarParkID")
     @Expose
-    private String lotsAvailable;
-    @SerializedName("lotType")
+    private String carParkID;
+    @SerializedName("Area")
+    @Expose
+    private String area;
+    @SerializedName("Development")
+    @Expose
+    private String development;
+    @SerializedName("Location")
+    @Expose
+    private String location;
+    @SerializedName("AvailableLots")
+    @Expose
+    private Integer availableLots;
+    @SerializedName("LotType")
     @Expose
     private String lotType;
-    @SerializedName("carparkNo")
+    @SerializedName("Agency")
     @Expose
-    private String carparkNo;
-    @SerializedName("geometries")
-    @Expose
-    private List<Geometry> geometries = null;
+    private String agency;
 
-    public String getLotsAvailable() {
-        return lotsAvailable;
+    public String getCarParkID() {
+        return carParkID;
     }
 
-    public void setLotsAvailable(String lotsAvailable) {
-        this.lotsAvailable = lotsAvailable;
+    public void setCarParkID(String carParkID) {
+        this.carParkID = carParkID;
+    }
+
+    public String getArea() {
+        return area;
+    }
+
+    public void setArea(String area) {
+        this.area = area;
+    }
+
+    public String getDevelopment() {
+        return development;
+    }
+
+    public void setDevelopment(String development) {
+        this.development = development;
+    }
+
+    public String getLocation() {
+        return location;
+    }
+
+    public void setLocation(String location) {
+        this.location = location;
+    }
+
+    public Integer getAvailableLots() {
+        return availableLots;
+    }
+
+    public void setAvailableLots(Integer availableLots) {
+        this.availableLots = availableLots;
     }
 
     public String getLotType() {
@@ -38,68 +82,37 @@ public class Carpark {
         this.lotType = lotType;
     }
 
-    public String getCarparkNo() {
-        return carparkNo;
+    public String getAgency() {
+        return agency;
     }
 
-    public void setCarparkNo(String carparkNo) {
-        this.carparkNo = carparkNo;
+    public void setAgency(String agency) {
+        this.agency = agency;
     }
 
-    public List<Geometry> getGeometries() {
-        return geometries;
+    public Double getLatitude(){
+        if(location.length()>0) {
+            String[] coordinates = location.split(" ");
+            return Double.parseDouble(coordinates[0]);
+        }
+        else return 1000.0;
     }
 
-    public void setGeometries(List<Geometry> geometries) {
-        this.geometries = geometries;
+    public Double getLongitude(){
+        if(location.length()>0) {
+            String[] coordinates = location.split(" ");
+            return Double.parseDouble(coordinates[1]);
+        }
+        else return 1000.0;
     }
 
-    public class Geometry {
-
-        @SerializedName("coordinates")
-        @Expose
-        private String coordinates;
-
-        @Expose
-        private Double latitude;
-
-        @Expose
-        private Double longitude;
-
-        @Expose
-        private String address;
-
-        public String getCoordinates() {
-            String[] latlong =  coordinates.split(",");
-            Double east = Double.parseDouble(latlong[0]);
-            Double north = Double.parseDouble(latlong[1]);
-            SVY21Coordinate result = new SVY21Coordinate(north,east);
-            LatLonCoordinate reverseResult = result.asLatLon();
-            return reverseResult.getLatitude() + "," + reverseResult.getLongitude();
-        }
-
-        public void setCoordinates(String coordinates) {
-            this.coordinates = coordinates;
-        }
-
-        public String getAddress(){
-            return address;
-        }
-
-        public void setAddress(String address){
-            this.address = address;
-        }
-
-        public Double getLatitude(){
-            String[] latlong =  getCoordinates().split(",");
-            return Double.parseDouble(latlong[0]);
-        }
-
-        public Double getLongitude(){
-            String[] latlong =  getCoordinates().split(",");
-            return Double.parseDouble(latlong[1]);
-        }
-
+    @Override
+    public int describeContents() {
+        return 0;
     }
 
+    @Override
+    public void writeToParcel(Parcel parcel, int i) {
+
+    }
 }

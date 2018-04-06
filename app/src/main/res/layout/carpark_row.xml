@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="utf-8"?>
+<layout xmlns:android="http://schemas.android.com/apk/res/android">
+    <data>
+        <variable
+            name="carpark"
+            type="com.example.nydia.travelsmartapp.models.Carpark" />
+    </data>
+
+    <RelativeLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:background="?android:attr/selectableItemBackground"
+        android:focusable="true"
+        android:orientation="vertical"
+        android:paddingBottom="@dimen/row_padding_vertical"
+        android:paddingLeft="@dimen/activity_horizontal_margin"
+        android:paddingRight="@dimen/activity_horizontal_margin"
+        android:paddingTop="@dimen/row_padding_vertical">
+
+        <TextView
+            android:id="@+id/incident_type"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_alignParentTop="true"
+            android:textColor="@color/title"
+            android:textSize="16sp"
+            android:textStyle="bold"
+            android:text="@{carpark.development}"/>
+
+        <TextView
+            android:id="@+id/incident_message"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_below="@id/incident_type"
+            android:textColor="@color/title"
+            android:textSize="16sp"
+            android:textStyle="bold"
+            android:text='@{String.format("%d", carpark.availableLots)}'/>
+
+    </RelativeLayout>
+
+</layout>

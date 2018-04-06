@@ -10,39 +10,28 @@ import com.google.gson.annotations.SerializedName;
  */
 
 public class CarparkAvailabilityResponse {
-
-        @SerializedName("Result")
+        @SerializedName("odata.metadata")
         @Expose
-        private List<Carpark> result = null;
-        @SerializedName("Status")
+        private String odataMetadata;
+        @SerializedName("value")
         @Expose
-        private String status;
-        @SerializedName("Message")
-        @Expose
-        private String message;
+        private List<Carpark> value = null;
 
-        public List<Carpark> getResult() {
-            return result;
+        public String getOdataMetadata() {
+            return odataMetadata;
         }
 
-        public void setResult(List<Carpark> result) {
-            this.result = result;
+        public void setOdataMetadata(String odataMetadata) {
+            this.odataMetadata = odataMetadata;
         }
 
-        public String getStatus() {
-            return status;
+        public List<Carpark> getValue() {
+            return value;
         }
 
-        public void setStatus(String status) {
-            this.status = status;
+        public void setValue(List<Carpark> value) {
+            this.value = value;
         }
 
-        public String getMessage() {
-            return message;
-        }
+}
 
-        public void setMessage(String message) {
-            this.message = message;
-        }
-
-    }

@@ -2,8 +2,11 @@ package com.example.nydia.travelsmartapp.network;
 
 import android.arch.lifecycle.LiveData;
 import android.arch.lifecycle.MutableLiveData;
+import android.location.Location;
 import android.util.Log;
 
+import com.example.nydia.travelsmartapp.models.Carpark;
+import com.example.nydia.travelsmartapp.models.CarparkAvailabilityResponse;
 import com.example.nydia.travelsmartapp.models.TrafficCamera;
 import com.example.nydia.travelsmartapp.models.TrafficCameraResponse;
 import com.example.nydia.travelsmartapp.models.TrafficIncident;
@@ -28,16 +31,16 @@ import retrofit2.converter.gson.GsonConverterFactory;
  * Created by nydia on 3/28/18.
  */
 
-public class TrafficCameraRepository  extends LiveData {
-    private TrafficCameraService trafficCameraService;
-    private static TrafficCameraRepository trafficCameraRepository;
+public class LTARepository extends LiveData {
+    private LTAService LTAService;
+    private static LTARepository LTARepository;
 
     private static Retrofit retrofit = null;
 
     private static final String apiKey = "6VW6Xv1vTpu2/gFswVmVmA==";
     private static final String base_url = "http://datamall2.mytransport.sg/";
 
-    private TrafficCameraRepository(){
+    private LTARepository(){
         if(retrofit==null) {
             OkHttpClient.Builder builder = new OkHttpClient.Builder();
             builder.addInterceptor(new Interceptor() {
@@ -63,25 +66,25 @@ public class TrafficCameraRepository  extends LiveData {
                     .client(client)
                     .build();
 
-            trafficCameraService = retrofit.create(TrafficCameraService.class);
+            LTAService = retrofit.create(LTAService.class);
         }
     }
 
-        public synchronized static TrafficCameraRepository getInstance() {
+        public synchronized static LTARepository getInstance() {
             //TODO No need to implement this singleton in Part #2 since Dagger will handle it ...
-            if (trafficCameraRepository == null) {
-                if (trafficCameraRepository == null) {
-                    trafficCameraRepository = new TrafficCameraRepository();
+            if (LTARepository == null) {
+                if (LTARepository == null) {
+                    LTARepository = new LTARepository();
                 }
             }
-            return trafficCameraRepository;
+            return LTARepository;
         }
 
     public LiveData<TrafficCameraResponse> getTrafficCamera() {
         final MutableLiveData<TrafficCameraResponse> data = new MutableLiveData<>();
-        Log.d("TrafficCameraRepository", "Fetching traffic cameras");
+        Log.d("LTARepository", "Fetching traffic cameras");
 
-        trafficCameraService.getCameras().enqueue(new Callback<TrafficCameraResponse>() {
+        LTAService.getCameras().enqueue(new Callback<TrafficCameraResponse>() {
             @Override
             public void onResponse(Call<TrafficCameraResponse> call, Response<TrafficCameraResponse> response) {
                 data.setValue(response.body());
@@ -101,7 +104,7 @@ public class TrafficCameraRepository  extends LiveData {
     public LiveData<List<TrafficCamera>> getNearestTrafficCamera(final List<LatLng> polyline) {
         final MutableLiveData<List<TrafficCamera>> data = new MutableLiveData<>();
 
-        trafficCameraService.getCameras().enqueue(new Callback<TrafficCameraResponse>() {
+        LTAService.getCameras().enqueue(new Callback<TrafficCameraResponse>() {
             @Override
             public void onResponse(Call<TrafficCameraResponse> call, Response<TrafficCameraResponse> response) {
                 List<TrafficCamera> list = new ArrayList<>();
@@ -130,7 +133,7 @@ public class TrafficCameraRepository  extends LiveData {
     public LiveData<TrafficIncidentResponse> getTrafficIncident() {
         final MutableLiveData<TrafficIncidentResponse> data = new MutableLiveData<>();
 
-        trafficCameraService.getIncidents().enqueue(new Callback<TrafficIncidentResponse>() {
+        LTAService.getIncidents().enqueue(new Callback<TrafficIncidentResponse>() {
             @Override
             public void onResponse(Call<TrafficIncidentResponse> call, Response<TrafficIncidentResponse> response) {
                 data.setValue(response.body());
@@ -150,7 +153,7 @@ public class TrafficCameraRepository  extends LiveData {
     public LiveData<List<TrafficIncident>> getNearestTrafficIncident(final List<LatLng> polyline) {
         final MutableLiveData<List<TrafficIncident>> data = new MutableLiveData<>();
 
-            trafficCameraService.getIncidents().enqueue(new Callback<TrafficIncidentResponse>() {
+            LTAService.getIncidents().enqueue(new Callback<TrafficIncidentResponse>() {
                 @Override
                 public void onResponse(Call<TrafficIncidentResponse> call, Response<TrafficIncidentResponse> response) {
                     List<TrafficIncident> list = new ArrayList<>();
@@ -176,13 +179,56 @@ public class TrafficCameraRepository  extends LiveData {
             return data;
     }
 
+    public LiveData<CarparkAvailabilityResponse> getCarparkAvailability() {
+        final MutableLiveData<CarparkAvailabilityResponse> data = new MutableLiveData<>();
+        Log.d("CarparkRespository", "Fetching carparks");
 
-    private void simulateDelay() {
-        try {
-            Thread.sleep(10);
-        } catch (InterruptedException e) {
-            e.printStackTrace();
-        }
+        LTAService.getCarparkAvailability().enqueue(new Callback<CarparkAvailabilityResponse>() {
+            @Override
+            public void onResponse(Call<CarparkAvailabilityResponse> call, Response<CarparkAvailabilityResponse> response) {
+                data.setValue(response.body());
+            }
+
+            @Override
+            public void onFailure(Call<CarparkAvailabilityResponse> call, Throwable t) {
+
+                // Error handling will be explained in the next article …
+            }
+
+        });
+
+        return data;
     }
 
+    public LiveData<List<Carpark>> getNearestAvailableCarparks(final LatLng destination) {
+        final MutableLiveData<List<Carpark>> data = new MutableLiveData<>();
+
+        LTAService.getCarparkAvailability().enqueue(new Callback<CarparkAvailabilityResponse>() {
+            @Override
+            public void onResponse(Call<CarparkAvailabilityResponse> call, Response<CarparkAvailabilityResponse> response) {
+                List<Carpark> list = new ArrayList<>();
+                for (int i = 0; i < response.body().getValue().size(); i++) {
+                    LatLng point = new LatLng(response.body().getValue().get(i).getLatitude(), response.body().getValue().get(i).getLongitude());
+                    float[] distance = new float[1];
+                    Location.distanceBetween(point.latitude, point.longitude, destination.latitude, destination.longitude, distance);
+                    boolean result = distance[0] <= 500;
+                    boolean available = response.body().getValue().get(i).getAvailableLots() > 0;
+                    boolean car = response.body().getValue().get(i).getLotType().contains("C");
+                    if (result && available && car) {
+                        Log.d("Repository", "Nearest available carpark found");
+                        list.add(response.body().getValue().get(i));
+                    }
+                    }
+                data.setValue(list);
+            }
+
+            @Override
+            public void onFailure(Call<CarparkAvailabilityResponse> call, Throwable t) {
+
+                // Error handling will be explained in the next article …
+            }
+
+        });
+        return data;
+    }
 }

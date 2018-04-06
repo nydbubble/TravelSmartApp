@@ -40,7 +40,6 @@ public class JourneyInfoFragment extends Fragment {
 
     // TODO: Rename and change types of parameters
     private Leg leg;
-    private String mParam2;
 
     private ArrayList<TrafficCamera> trafficCamera = new ArrayList<>();
     private RecyclerView trafficCameraRecyclerView;
@@ -59,8 +58,6 @@ public class JourneyInfoFragment extends Fragment {
     public static JourneyInfoFragment newInstance(Leg leg, List<TrafficCamera> trafficCamera, List<TrafficIncident> trafficIncident) {
         JourneyInfoFragment fragment = new JourneyInfoFragment();
         Bundle args = new Bundle();
-        /*args.putString(ARG_PARAM1, param1);
-        args.putString(ARG_PARAM2, param2);*/
         args.putParcelable("Leg", leg); //google maps stuff
         args.putParcelableArrayList("TrafficCamera", (ArrayList<? extends Parcelable>)trafficCamera);
         args.putParcelableArrayList("TrafficIncident", (ArrayList<? extends Parcelable>)trafficIncident);
@@ -75,7 +72,6 @@ public class JourneyInfoFragment extends Fragment {
             trafficCamera = getArguments().getParcelableArrayList("TrafficCamera");
             leg = getArguments().getParcelable("Leg");
             trafficIncident = getArguments().getParcelableArrayList("TrafficIncident");
-            mParam2 = getArguments().getString(ARG_PARAM2);
         }
     }
 

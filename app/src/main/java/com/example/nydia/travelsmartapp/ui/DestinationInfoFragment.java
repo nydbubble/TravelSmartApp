@@ -1,12 +1,26 @@
 package com.example.nydia.travelsmartapp.ui;
 
+import android.databinding.DataBindingUtil;
+import android.databinding.ViewDataBinding;
 import android.os.Bundle;
+import android.os.Parcelable;
 import android.support.v4.app.Fragment;
+import android.support.v7.widget.LinearLayoutManager;
+import android.support.v7.widget.RecyclerView;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.ScrollView;
+import android.widget.TextView;
+import android.widget.Toast;
 
 import com.example.nydia.travelsmartapp.R;
+import com.example.nydia.travelsmartapp.models.Carpark;
+import com.example.nydia.travelsmartapp.models.Forecast;
+
+import java.util.ArrayList;
+import java.util.List;
 
 
 /**
@@ -18,35 +32,27 @@ import com.example.nydia.travelsmartapp.R;
  * create an instance of this fragment.
  */
 public class DestinationInfoFragment extends Fragment {
+    private Forecast forecast;
+    private ViewDataBinding binding;
+    private RecyclerView carparkRecyclerView;
+    private ScrollView mainScrollView;
+    private ArrayList<Carpark> availableCarparks = new ArrayList<>();
+    private TextView psiTextView;
     // TODO: Rename parameter arguments, choose names that match
     // the fragment initialization parameters, e.g. ARG_ITEM_NUMBER
-    private static final String ARG_PARAM1 = "param1";
-    private static final String ARG_PARAM2 = "param2";
-
-    // TODO: Rename and change types of parameters
-    private String mParam1;
-    private String mParam2;
+    
 
     //private OnFragmentInteractionListener mListener;
 
     public DestinationInfoFragment() {
         // Required empty public constructor
     }
-
-    /**
-     * Use this factory method to create a new instance of
-     * this fragment using the provided parameters.
-     *
-     * @param param1 Parameter 1.
-     * @param param2 Parameter 2.
-     * @return A new instance of fragment DestinationInfoFragment.
-     */
-    // TODO: Rename and change types and number of parameters
-    public static DestinationInfoFragment newInstance(String param1, String param2) {
+    
+    public static DestinationInfoFragment newInstance(Forecast forecast, List<Carpark> carparks) {
         DestinationInfoFragment fragment = new DestinationInfoFragment();
         Bundle args = new Bundle();
-        args.putString(ARG_PARAM1, param1);
-        args.putString(ARG_PARAM2, param2);
+        args.putParcelable("Weather Forecast", forecast);
+        args.putParcelableArrayList("Carpark", (ArrayList<? extends Parcelable>)carparks);
         fragment.setArguments(args);
         return fragment;
     }
@@ -55,8 +61,9 @@ public class DestinationInfoFragment extends Fragment {
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         if (getArguments() != null) {
-            mParam1 = getArguments().getString(ARG_PARAM1);
-            mParam2 = getArguments().getString(ARG_PARAM2);
+            forecast = getArguments().getParcelable("Weather Forecast");
+            //availableCarparks = getArguments().getParcelable("Carpark");
+            //availableCarparks.add(new Carpark());
         }
     }
 
@@ -64,7 +71,44 @@ public class DestinationInfoFragment extends Fragment {
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
         // Inflate the layout for this fragment
-        return inflater.inflate(R.layout.fragment_destination_info, container, false);
+        binding = DataBindingUtil.inflate(
+                inflater, R.layout.fragment_destination_info, container, false);
+        View rootView = binding.getRoot();
+        psiTextView = (TextView)rootView.findViewById(R.id.psi);
+        initCarpark(rootView);
+
+        mainScrollView = (ScrollView)rootView.findViewById(R.id.destinationinfo);
+        return rootView;
+    }
+
+    private void initCarpark(View rootView){
+        carparkRecyclerView = (RecyclerView) rootView.findViewById(R.id.carparks);
+        carparkRecyclerView.setNestedScrollingEnabled(false);
+        CarparkAdapter mAdapter = new CarparkAdapter(availableCarparks, new CarparkAdapter.OnItemClickListener() {
+            @Override public void onItemClick(Carpark item) {
+                Toast.makeText(getContext(), "Item Clicked", Toast.LENGTH_LONG).show();
+            }
+        });
+        RecyclerView.LayoutManager mLayoutManager = new LinearLayoutManager(getActivity());
+        carparkRecyclerView.setLayoutManager(mLayoutManager);
+        carparkRecyclerView.setAdapter(mAdapter);
+        carparkRecyclerView.getAdapter().notifyDataSetChanged();
+    }
+
+    public void setCarparks(ArrayList<Carpark> carparks){
+        availableCarparks.clear();
+        availableCarparks.addAll(carparks);
+        carparkRecyclerView.getAdapter().notifyDataSetChanged();
+
+        mainScrollView.smoothScrollTo(0,0);
+    }
+
+    public void setForecast(Forecast forecast){
+        binding.setVariable(com.example.nydia.travelsmartapp.BR.forecast, forecast);
+    }
+
+    public void setPsi(String psi) {
+        psiTextView.setText(psi);
     }
 
     // TODO: Rename method, update argument and hook method into UI event
